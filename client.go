@@ -3,7 +3,6 @@ package request
 import (
 	"net/http"
 	"sync"
-	"time"
 )
 
 type Client struct {
@@ -14,7 +13,7 @@ type Client struct {
 	// clientPool is for save http.Client instances.
 	clientPool sync.Pool
 	// timeout specifies the time before the request times out.
-	timeout time.Duration
+	timeout int
 }
 
 type Config struct {
@@ -22,9 +21,14 @@ type Config struct {
 	BaseURL string
 	// Timeout is request timeout in milliseconds.
 	Timeout int
-	// Headers are custom headers to be sent.
+	// Headers are custom headers to be sent, and they'll be overwritten if the
+	// same key is presented in the request.
 	Headers map[string][]string
 }
+
+const (
+	DefaultTimeout = 1000
+)
 
 var defaultClient *Client
 
@@ -43,18 +47,11 @@ func New(config ...Config) *Client {
 		cfg := config[0]
 
 		cli.BaseURL = cfg.BaseURL
-		if cfg.Timeout > 0 {
-			cli.SetTimeout(cfg.Timeout)
-		}
+		cli.timeout = cfg.Timeout
 		cli.setHeader(cfg.Headers)
 	}
 
 	return cli
-}
-
-// SetTimeout sets client's timeout with a number in milliseconds.
-func (cli *Client) SetTimeout(timeout int) {
-	cli.timeout = time.Duration(timeout) * time.Millisecond
 }
 
 // setHeader initializes client's Headers field from config.
@@ -67,6 +64,10 @@ func (cli *Client) setHeader(headers map[string][]string) {
 			cli.Headers[k] = nil
 		}
 	}
+}
+
+func (cli *Client) getHTTPClient() *http.Client {
+	return cli.clientPool.Get().(*http.Client)
 }
 
 func init() {
