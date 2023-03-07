@@ -10,6 +10,7 @@ type Client struct {
 	BaseURL string
 	// Headers are custom headers to be sent.
 	Headers http.Header
+
 	// clientPool is for save http.Client instances.
 	clientPool sync.Pool
 	// timeout specifies the time before the request times out.
@@ -27,7 +28,10 @@ type Config struct {
 }
 
 const (
-	DefaultTimeout = 1000
+	// RequestTimeoutDefault is the default timeout for request.
+	RequestTimeoutDefault int = 1000
+	// RequestTimeoutNone means
+	RequestTimeoutNone int = -1
 )
 
 var defaultClient *Client
@@ -39,7 +43,7 @@ func New(config ...Config) *Client {
 	cli.Headers = make(http.Header)
 	cli.clientPool = sync.Pool{
 		New: func() any {
-			return http.Client{}
+			return new(http.Client)
 		},
 	}
 

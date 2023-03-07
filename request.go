@@ -14,13 +14,25 @@ type RequestOptions struct {
 	Timeout    int
 	Context    context.Context
 	Parameters map[string][]string
+	Headers    map[string][]string
 }
 
-func Request(url string, opts ...RequestOptions) (*http.Response, error) {
-	return defaultClient.Request(url, opts...)
+func Request(url string, out any, opts ...RequestOptions) error {
+	return defaultClient.Request(url, out, opts...)
 }
 
-func (cli *Client) Request(url string, opts ...RequestOptions) (*http.Response, error) {
+func (cli *Client) Request(url string, out any, opts ...RequestOptions) error {
+	_, err := cli.RequestRaw(url, opts...)
+	if err != nil {
+		return err
+	}
+
+	// TODO: decode body
+
+	return nil
+}
+
+func (cli *Client) RequestRaw(url string, opts ...RequestOptions) (*http.Response, error) {
 	var opt RequestOptions
 
 	if len(opts) > 0 {
@@ -33,7 +45,9 @@ func (cli *Client) Request(url string, opts ...RequestOptions) (*http.Response, 
 	if err != nil {
 		return nil, err
 	}
-	defer canFunc()
+	if canFunc != nil {
+		defer canFunc()
+	}
 
 	httpClient := cli.getHTTPClient()
 	defer func() {
@@ -57,71 +71,99 @@ func (cli *Client) makeRequest(url string, opt RequestOptions) (*http.Request, c
 	ctx, canFunc := cli.getContext(opt)
 
 	// TODO: body
+
 	req, err := http.NewRequestWithContext(ctx, method, url, nil)
 	if err != nil {
 		canFunc()
 		return nil, nil, err
 	}
 
-	// TODO: headers
+	cli.addHeadersToRequest(req, opt)
 
 	return req, canFunc, nil
 }
 
-func (cli *Client) parseURL(u string, opt RequestOptions) (string, error) {
-	base := ""
-	if opt.BaseURL != "" {
-		base = opt.BaseURL
-	} else if cli.BaseURL != "" {
-		base = cli.BaseURL
+func (cli *Client) addHeadersToRequest(req *http.Request, opt RequestOptions) {
+	if opt.Headers != nil {
+		for k, v := range opt.Headers {
+			for _, val := range v {
+				req.Header.Add(k, val)
+			}
+		}
 	}
 
-	if base == "" {
-		base = u
-		u = ""
+	if cli.Headers != nil {
+		for k, v := range cli.Headers {
+			for _, val := range v {
+				req.Header.Add(k, val)
+			}
+		}
 	}
+}
 
-	obj, err := url.Parse(base)
+func (cli *Client) parseURL(uri string, opt RequestOptions) (string, error) {
+	baseURL, uri, err := cli.getURL(uri, opt)
 	if err != nil {
 		return "", err
 	}
 
-	if u != "" {
-		obj.Path = path.Join(obj.Path, u)
+	obj, err := url.Parse(baseURL)
+	if err != nil {
+		return "", err
 	}
 
-	query := obj.Query()
+	if uri != "" {
+		obj.Path = path.Join(obj.Path, uri)
+	}
 
-	for k, vv := range opt.Parameters {
-		for _, v := range vv {
-			query.Add(k, v)
+	if opt.Parameters != nil {
+		// attach parameters to request url
+		query := obj.Query()
+
+		for k, vv := range opt.Parameters {
+			for _, v := range vv {
+				query.Add(k, v)
+			}
 		}
-	}
 
-	obj.RawQuery = query.Encode()
+		obj.RawQuery = query.Encode()
+	}
 
 	return obj.String(), nil
 }
 
+func (cli *Client) getURL(uri string, opt RequestOptions) (string, string, error) {
+	baseURL := opt.BaseURL
+	if baseURL == "" && cli.BaseURL != "" {
+		baseURL = cli.BaseURL
+	}
+	if baseURL == "" {
+		baseURL = uri
+		uri = ""
+	}
+
+	if baseURL == "" {
+		return "", "", ErrNoURL
+	}
+
+	return baseURL, uri, nil
+}
+
 func (cli *Client) getContext(opt RequestOptions) (context.Context, context.CancelFunc) {
-	var baseCtx context.Context
-
 	if opt.Context != nil {
-		baseCtx = opt.Context
-	} else {
-		baseCtx = context.TODO()
+		return opt.Context, nil
 	}
 
-	timeout := 0
-	if opt.Timeout != 0 {
+	baseCtx := context.TODO()
+
+	timeout := RequestTimeoutDefault
+	if opt.Timeout > 0 || opt.Timeout == RequestTimeoutNone {
 		timeout = opt.Timeout
-	} else if cli.timeout != 0 {
-		timeout = int(cli.timeout)
-	} else {
-		timeout = DefaultTimeout
+	} else if cli.timeout > 0 || cli.timeout == RequestTimeoutNone {
+		timeout = cli.timeout
 	}
 
-	if timeout == -1 {
+	if timeout == RequestTimeoutNone {
 		return context.WithCancel(baseCtx)
 	}
 
