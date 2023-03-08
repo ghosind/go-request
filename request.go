@@ -22,12 +22,14 @@ func Request(url string, out any, opts ...RequestOptions) error {
 }
 
 func (cli *Client) Request(url string, out any, opts ...RequestOptions) error {
-	_, err := cli.RequestRaw(url, opts...)
+	resp, err := cli.RequestRaw(url, opts...)
 	if err != nil {
 		return err
 	}
 
-	// TODO: decode body
+	if err := cli.decodeResponseBody(resp, out); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -58,9 +60,9 @@ func (cli *Client) RequestRaw(url string, opts ...RequestOptions) (*http.Respons
 }
 
 func (cli *Client) makeRequest(url string, opt RequestOptions) (*http.Request, context.CancelFunc, error) {
-	method := "GET"
-	if opt.Method != "" {
-		method = opt.Method
+	method := opt.Method
+	if method != "" {
+		method = http.MethodGet
 	}
 
 	url, err := cli.parseURL(url, opt)
