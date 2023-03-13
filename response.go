@@ -2,13 +2,10 @@ package request
 
 import (
 	"net/http"
-	"strings"
 )
 
 func (cli *Client) decodeResponseBody(resp *http.Response, out any) error {
-	contentType := resp.Header.Get("Content-Type")
-	contentType, _, _ = strings.Cut(contentType, ";") // remove parameters
-	contentType = strings.TrimSpace(contentType)
+	contentType := getContentType(resp.Header.Get("Content-Type"))
 
 	switch contentType {
 	case "application/json":

@@ -1,7 +1,9 @@
 package request
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -9,12 +11,15 @@ import (
 )
 
 type RequestOptions struct {
-	BaseURL    string
-	Method     string
-	Timeout    int
-	Context    context.Context
-	Parameters map[string][]string
-	Headers    map[string][]string
+	BaseURL     string
+	Method      string
+	Timeout     int
+	Context     context.Context
+	Parameters  map[string][]string
+	Headers     map[string][]string
+	Body        []byte
+	ContentType string
+	RawBody     any
 }
 
 func Request(url string, out any, opts ...RequestOptions) error {
@@ -72,9 +77,12 @@ func (cli *Client) makeRequest(url string, opt RequestOptions) (*http.Request, c
 
 	ctx, canFunc := cli.getContext(opt)
 
-	// TODO: body
+	body, err := cli.getRequestBody(opt)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	req, err := http.NewRequestWithContext(ctx, method, url, nil)
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		canFunc()
 		return nil, nil, err
@@ -83,6 +91,30 @@ func (cli *Client) makeRequest(url string, opt RequestOptions) (*http.Request, c
 	cli.addHeadersToRequest(req, opt)
 
 	return req, canFunc, nil
+}
+
+func (cli *Client) getRequestBody(opt RequestOptions) (io.Reader, error) {
+	var body []byte
+
+	if opt.Body != nil {
+		body = opt.Body
+	} else if opt.RawBody != nil {
+		contentType := getContentType(opt.ContentType)
+		switch contentType {
+		default: // default json
+			data, err := encodeJson(opt.RawBody)
+			if err != nil {
+				return nil, err
+			}
+			body = data
+		}
+	}
+
+	if body == nil {
+		return nil, nil
+	}
+
+	return bytes.NewReader(body), nil
 }
 
 func (cli *Client) addHeadersToRequest(req *http.Request, opt RequestOptions) {
