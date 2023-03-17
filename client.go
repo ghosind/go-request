@@ -34,8 +34,6 @@ const (
 	RequestTimeoutNone int = -1
 )
 
-var defaultClient *Client
-
 // New creates and returns a new Client instance.
 func New(config ...Config) *Client {
 	cli := new(Client)
@@ -70,10 +68,7 @@ func (cli *Client) setHeader(headers map[string][]string) {
 	}
 }
 
+// getHTTPClient returns a http.Client from the pool.
 func (cli *Client) getHTTPClient() *http.Client {
 	return cli.clientPool.Get().(*http.Client)
-}
-
-func init() {
-	defaultClient = New()
 }

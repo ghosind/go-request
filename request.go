@@ -22,10 +22,8 @@ type RequestOptions struct {
 	RawBody     any
 }
 
-func Request(url string, out any, opts ...RequestOptions) error {
-	return defaultClient.Request(url, out, opts...)
-}
-
+// Request the specific url with the optional request settings, and decode the
+// response to the out value.
 func (cli *Client) Request(url string, out any, opts ...RequestOptions) error {
 	resp, err := cli.RequestRaw(url, opts...)
 	if err != nil {
@@ -39,6 +37,8 @@ func (cli *Client) Request(url string, out any, opts ...RequestOptions) error {
 	return nil
 }
 
+// RequestRaw the specific url with the optional request settings, and return
+// the response.
 func (cli *Client) RequestRaw(url string, opts ...RequestOptions) (*http.Response, error) {
 	var opt RequestOptions
 
