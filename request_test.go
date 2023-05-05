@@ -1,7 +1,6 @@
 package request
 
 import (
-	"net/http"
 	"strings"
 	"testing"
 )
@@ -32,9 +31,8 @@ func TestSimpleRequest(t *testing.T) {
 func TestSimplePOSTRequest(t *testing.T) {
 	title := "MacBook Pro"
 
-	data, _, err := ToObject[ExampleProduct](Request("/products/add", RequestOptions{
+	data, _, err := ToObject[ExampleProduct](POST("/products/add", RequestOptions{
 		BaseURL: "https://dummyjson.com/",
-		Method:  http.MethodPost,
 		Timeout: 3000,
 		Body: map[string]any{
 			"title": title,
@@ -50,11 +48,12 @@ func TestSimplePOSTRequest(t *testing.T) {
 }
 
 func TestRequestWithParameters(t *testing.T) {
-	data, _, err := ToObject[ExampleProductsSearchData](Request("/products/search", RequestOptions{
+	data, _, err := ToObject[ExampleProductsSearchData](GET("/products/search", RequestOptions{
 		BaseURL: "https://dummyjson.com",
 		Parameters: map[string][]string{
 			"q": {"laptop"},
 		},
+		Timeout: 3000,
 	}))
 	if err != nil {
 		t.Fatalf("Unexpected request error: %v", err)

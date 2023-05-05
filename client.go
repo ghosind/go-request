@@ -56,6 +56,38 @@ func New(config ...Config) *Client {
 	return cli
 }
 
+func (cli *Client) Request(url string, opt ...RequestOptions) (*http.Response, error) {
+	return cli.request("", url, opt...)
+}
+
+func (cli *Client) DELETE(url string, opt ...RequestOptions) (*http.Response, error) {
+	return cli.request(http.MethodDelete, url, opt...)
+}
+
+func (cli *Client) GET(url string, opt ...RequestOptions) (*http.Response, error) {
+	return cli.request(http.MethodGet, url, opt...)
+}
+
+func (cli *Client) HEAD(url string, opt ...RequestOptions) (*http.Response, error) {
+	return cli.request(http.MethodHead, url, opt...)
+}
+
+func (cli *Client) OPTIONS(url string, opt ...RequestOptions) (*http.Response, error) {
+	return cli.request(http.MethodOptions, url, opt...)
+}
+
+func (cli *Client) PATCH(url string, opt ...RequestOptions) (*http.Response, error) {
+	return cli.request(http.MethodPatch, url, opt...)
+}
+
+func (cli *Client) POST(url string, opt ...RequestOptions) (*http.Response, error) {
+	return cli.request(http.MethodPost, url, opt...)
+}
+
+func (cli *Client) PUT(url string, opt ...RequestOptions) (*http.Response, error) {
+	return cli.request(http.MethodPut, url, opt...)
+}
+
 // setHeader initializes client's Headers field from config.
 func (cli *Client) setHeader(headers map[string][]string) {
 	for k, v := range headers {

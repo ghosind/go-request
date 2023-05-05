@@ -19,9 +19,7 @@ type RequestOptions struct {
 	ContentType string
 }
 
-// Request the specific url with the optional request settings, and decode the
-// response to the out value.
-func (cli *Client) Request(url string, opts ...RequestOptions) (*http.Response, error) {
+func (cli *Client) request(method, url string, opts ...RequestOptions) (*http.Response, error) {
 	var opt RequestOptions
 
 	if len(opts) > 0 {
@@ -30,7 +28,11 @@ func (cli *Client) Request(url string, opts ...RequestOptions) (*http.Response, 
 		opt = RequestOptions{}
 	}
 
-	req, canFunc, err := cli.makeRequest(url, opt)
+	if method == "" {
+		method = opt.Method
+	}
+
+	req, canFunc, err := cli.makeRequest(method, url, opt)
 	if err != nil {
 		return nil, err
 	}
@@ -46,8 +48,7 @@ func (cli *Client) Request(url string, opts ...RequestOptions) (*http.Response, 
 	return httpClient.Do(req)
 }
 
-func (cli *Client) makeRequest(url string, opt RequestOptions) (*http.Request, context.CancelFunc, error) {
-	method := opt.Method
+func (cli *Client) makeRequest(method, url string, opt RequestOptions) (*http.Request, context.CancelFunc, error) {
 	if method == "" {
 		method = http.MethodGet
 	}
