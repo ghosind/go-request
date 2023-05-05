@@ -30,7 +30,7 @@ type Config struct {
 const (
 	// RequestTimeoutDefault is the default timeout for request.
 	RequestTimeoutDefault int = 1000
-	// RequestTimeoutNone means
+	// RequestTimeoutNone means no timeout limitation.
 	RequestTimeoutNone int = -1
 )
 

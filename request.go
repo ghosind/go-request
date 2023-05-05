@@ -1,9 +1,7 @@
 package request
 
 import (
-	"bytes"
 	"context"
-	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -12,34 +10,18 @@ import (
 
 type RequestOptions struct {
 	BaseURL     string
-	Method      string
 	Timeout     int
 	Context     context.Context
 	Parameters  map[string][]string
 	Headers     map[string][]string
-	Body        []byte
+	Body        any
+	Method      string
 	ContentType string
-	RawBody     any
 }
 
 // Request the specific url with the optional request settings, and decode the
 // response to the out value.
-func (cli *Client) Request(url string, out any, opts ...RequestOptions) error {
-	resp, err := cli.RequestRaw(url, opts...)
-	if err != nil {
-		return err
-	}
-
-	if err := cli.decodeResponseBody(resp, out); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// RequestRaw the specific url with the optional request settings, and return
-// the response.
-func (cli *Client) RequestRaw(url string, opts ...RequestOptions) (*http.Response, error) {
+func (cli *Client) Request(url string, opts ...RequestOptions) (*http.Response, error) {
 	var opt RequestOptions
 
 	if len(opts) > 0 {
@@ -66,7 +48,7 @@ func (cli *Client) RequestRaw(url string, opts ...RequestOptions) (*http.Respons
 
 func (cli *Client) makeRequest(url string, opt RequestOptions) (*http.Request, context.CancelFunc, error) {
 	method := opt.Method
-	if method != "" {
+	if method == "" {
 		method = http.MethodGet
 	}
 
@@ -75,12 +57,12 @@ func (cli *Client) makeRequest(url string, opt RequestOptions) (*http.Request, c
 		return nil, nil, err
 	}
 
-	ctx, canFunc := cli.getContext(opt)
-
 	body, err := cli.getRequestBody(opt)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	ctx, canFunc := cli.getContext(opt)
 
 	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
@@ -91,30 +73,6 @@ func (cli *Client) makeRequest(url string, opt RequestOptions) (*http.Request, c
 	cli.addHeadersToRequest(req, opt)
 
 	return req, canFunc, nil
-}
-
-func (cli *Client) getRequestBody(opt RequestOptions) (io.Reader, error) {
-	var body []byte
-
-	if opt.Body != nil {
-		body = opt.Body
-	} else if opt.RawBody != nil {
-		contentType := getContentType(opt.ContentType)
-		switch contentType {
-		default: // default json
-			data, err := encodeJson(opt.RawBody)
-			if err != nil {
-				return nil, err
-			}
-			body = data
-		}
-	}
-
-	if body == nil {
-		return nil, nil
-	}
-
-	return bytes.NewReader(body), nil
 }
 
 func (cli *Client) addHeadersToRequest(req *http.Request, opt RequestOptions) {
@@ -132,6 +90,13 @@ func (cli *Client) addHeadersToRequest(req *http.Request, opt RequestOptions) {
 				req.Header.Add(k, val)
 			}
 		}
+	}
+
+	if opt.ContentType != "" {
+		req.Header.Set("Content-Type", opt.ContentType)
+	}
+	if ct := req.Header.Get("Content-Type"); ct == "" {
+		req.Header.Set("Content-Type", "application/json") // Set default content type
 	}
 }
 
@@ -188,7 +153,7 @@ func (cli *Client) getContext(opt RequestOptions) (context.Context, context.Canc
 		return opt.Context, nil
 	}
 
-	baseCtx := context.TODO()
+	baseCtx := context.Background()
 
 	timeout := RequestTimeoutDefault
 	if opt.Timeout > 0 || opt.Timeout == RequestTimeoutNone {
@@ -199,7 +164,7 @@ func (cli *Client) getContext(opt RequestOptions) (context.Context, context.Canc
 
 	if timeout == RequestTimeoutNone {
 		return context.WithCancel(baseCtx)
+	} else {
+		return context.WithTimeout(baseCtx, time.Duration(timeout)*time.Millisecond)
 	}
-
-	return context.WithTimeout(baseCtx, time.Duration(timeout)*time.Millisecond)
 }

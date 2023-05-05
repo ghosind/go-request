@@ -1,13 +1,15 @@
 package request
 
 import (
+	"net/http"
 	"strings"
 	"testing"
 )
 
 type ExampleProduct struct {
-	Id       int64
-	Category string
+	ID       int64  `json:"id"`
+	Title    string `json:"title"`
+	Category string `json:"category"`
 }
 
 type ExampleProductsSearchData struct {
@@ -15,26 +17,45 @@ type ExampleProductsSearchData struct {
 }
 
 func TestSimpleRequest(t *testing.T) {
-	var data ExampleProduct
-
-	err := Request("https://dummyjson.com/products/1", &data)
+	data, _, err := ToObject[ExampleProduct](Request("https://dummyjson.com/products/1", RequestOptions{
+		Timeout: 3000,
+	}))
 	if err != nil {
 		t.Fatalf("Unexpected request error: %v", err)
 	}
 
-	if data.Id != 1 {
-		t.Fatalf("Expect product id is 1, actually %d", data.Id)
+	if data.ID != 1 {
+		t.Fatalf("Expect product id is 1, actually %d", data.ID)
+	}
+}
+
+func TestSimplePOSTRequest(t *testing.T) {
+	title := "MacBook Pro"
+
+	data, _, err := ToObject[ExampleProduct](Request("/products/add", RequestOptions{
+		BaseURL: "https://dummyjson.com/",
+		Method:  http.MethodPost,
+		Timeout: 3000,
+		Body: map[string]any{
+			"title": title,
+		},
+	}))
+	if err != nil {
+		t.Fatalf("Unexpected request error: %v", err)
+	}
+
+	if data.Title != title {
+		t.Fatalf("Expect product's title is \"%s\", actually \"%s\"", title, data.Title)
 	}
 }
 
 func TestRequestWithParameters(t *testing.T) {
-	var data ExampleProductsSearchData
-
-	err := Request("https://dummyjson.com/products/search", &data, RequestOptions{
+	data, _, err := ToObject[ExampleProductsSearchData](Request("/products/search", RequestOptions{
+		BaseURL: "https://dummyjson.com",
 		Parameters: map[string][]string{
 			"q": {"laptop"},
 		},
-	})
+	}))
 	if err != nil {
 		t.Fatalf("Unexpected request error: %v", err)
 	}

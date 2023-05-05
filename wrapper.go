@@ -6,9 +6,9 @@ import (
 	"net/http"
 )
 
-func ToObject[T any](resp *http.Response, err error) (*T, error) {
+func ToObject[T any](resp *http.Response, err error) (*T, *http.Response, error) {
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	defer resp.Body.Close()
@@ -16,27 +16,27 @@ func ToObject[T any](resp *http.Response, err error) (*T, error) {
 	out := new(T)
 
 	contentType := resp.Header.Get("Content-Type")
-	switch contentType {
+	switch getContentType(contentType) {
 	case "application/json":
 		if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-			return nil, err
+			return nil, resp, err
 		}
 	}
 
-	return out, nil
+	return out, resp, nil
 }
 
-func ToString(resp *http.Response, err error) (string, error) {
+func ToString(resp *http.Response, err error) (string, *http.Response, error) {
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	resp.Body.Close()
 
-	return string(data), nil
+	return string(data), resp, nil
 }
