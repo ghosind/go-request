@@ -17,7 +17,7 @@ type ExampleProductsSearchData struct {
 
 func TestSimpleRequest(t *testing.T) {
 	data, _, err := ToObject[ExampleProduct](Request("https://dummyjson.com/products/1", RequestOptions{
-		Timeout: 3000,
+		Timeout: RequestTimeoutNone,
 	}))
 	if err != nil {
 		t.Fatalf("Unexpected request error: %v", err)
@@ -33,7 +33,7 @@ func TestSimplePOSTRequest(t *testing.T) {
 
 	data, _, err := ToObject[ExampleProduct](POST("/products/add", RequestOptions{
 		BaseURL: "https://dummyjson.com/",
-		Timeout: 3000,
+		Timeout: RequestTimeoutNone,
 		Body: map[string]any{
 			"title": title,
 		},
@@ -53,7 +53,7 @@ func TestRequestWithParameters(t *testing.T) {
 		Parameters: map[string][]string{
 			"q": {"laptop"},
 		},
-		Timeout: 3000,
+		Timeout: RequestTimeoutNone,
 	}))
 	if err != nil {
 		t.Fatalf("Unexpected request error: %v", err)
