@@ -7,6 +7,7 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
+      max-parallel: 1
       matrix:
         go_version: ["1.18", "1.19", "1.20"]
         os: [ubuntu-latest, windows-latest, macOS-latest]
