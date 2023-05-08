@@ -1,14 +1,16 @@
 package request
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
 
 type ExampleProduct struct {
-	ID       int64  `json:"id"`
-	Title    string `json:"title"`
-	Category string `json:"category"`
+	ID        int64  `json:"id"`
+	Title     string `json:"title"`
+	Category  string `json:"category"`
+	IsDeleted *bool  `json:"isDeleted,omitempty"`
 }
 
 type ExampleProductsSearchData struct {
@@ -16,19 +18,39 @@ type ExampleProductsSearchData struct {
 }
 
 func TestSimpleRequest(t *testing.T) {
-	data, _, err := ToObject[ExampleProduct](Request("https://dummyjson.com/products/1", RequestOptions{
-		Timeout: RequestTimeoutNone,
+	data, _, err := ToString(Request("https://dummyjson.com/products/1"))
+	if err != nil {
+		t.Fatalf("Unexpected request error: %v", err)
+	}
+
+	if len(data) == 0 {
+		t.Fatalf("Expect data's length is not 0")
+	}
+
+	product := new(ExampleProduct)
+	if err := json.Unmarshal([]byte(data), &product); err != nil {
+		t.Fatalf("Unexpected unmarshal error: %v", err)
+	}
+
+	if product.ID != 1 {
+		t.Fatalf("Expect product's id is 1, actually %d", product.ID)
+	}
+}
+
+func TestGetRequest(t *testing.T) {
+	data, _, err := ToObject[ExampleProduct](GET("/products/1", RequestOptions{
+		BaseURL: "https://dummyjson.com",
 	}))
 	if err != nil {
 		t.Fatalf("Unexpected request error: %v", err)
 	}
 
 	if data.ID != 1 {
-		t.Fatalf("Expect product id is 1, actually %d", data.ID)
+		t.Fatalf("Expect product's id is 1, actually %d", data.ID)
 	}
 }
 
-func TestSimplePOSTRequest(t *testing.T) {
+func TestPOSTRequest(t *testing.T) {
 	title := "MacBook Pro"
 
 	data, _, err := ToObject[ExampleProduct](POST("/products/add", RequestOptions{
@@ -47,13 +69,46 @@ func TestSimplePOSTRequest(t *testing.T) {
 	}
 }
 
-func TestRequestWithParameters(t *testing.T) {
+func TestPUTRequest(t *testing.T) {
+	title := "Apple"
+
+	data, _, err := ToObject[ExampleProduct](PUT("/products/1", RequestOptions{
+		BaseURL: "https://dummyjson.com/",
+		Timeout: RequestTimeoutNone,
+		Body: map[string]any{
+			"title": title,
+		},
+	}))
+	if err != nil {
+		t.Fatalf("Unexpected request error: %v", err)
+	}
+
+	if data.Title != title {
+		t.Fatalf("Expect product's title is \"%s\", actually \"%s\"", title, data.Title)
+	}
+}
+
+func TestDeleteRequest(t *testing.T) {
+	data, _, err := ToObject[ExampleProduct](DELETE("/products/1", RequestOptions{
+		BaseURL: "https://dummyjson.com/",
+		Timeout: RequestTimeoutNone,
+	}))
+	if err != nil {
+		t.Fatalf("Unexpected request error: %v", err)
+	}
+
+	if data.IsDeleted == nil || *data.IsDeleted != true {
+		t.Fatalf("Expect product's isDelete is true")
+	}
+}
+
+func TestGETRequestWithParameters(t *testing.T) {
 	data, _, err := ToObject[ExampleProductsSearchData](GET("/products/search", RequestOptions{
 		BaseURL: "https://dummyjson.com",
 		Parameters: map[string][]string{
 			"q": {"laptop"},
 		},
-		Timeout: RequestTimeoutNone,
+		Timeout: 3 * 1000,
 	}))
 	if err != nil {
 		t.Fatalf("Unexpected request error: %v", err)
@@ -62,7 +117,7 @@ func TestRequestWithParameters(t *testing.T) {
 	if data.Products != nil {
 		for _, product := range *data.Products {
 			if !strings.Contains(product.Category, "laptop") {
-				t.Fatalf("Expect product category contains 'laptop', actually %s", product.Category)
+				t.Fatalf("Expect product's category contains 'laptop', actually %s", product.Category)
 			}
 		}
 	}
