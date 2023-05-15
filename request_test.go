@@ -2,6 +2,7 @@ package request
 
 import (
 	"encoding/json"
+	"net/http"
 	"strings"
 	"testing"
 )
@@ -15,6 +16,10 @@ type ExampleProduct struct {
 
 type ExampleProductsSearchData struct {
 	Products *[]ExampleProduct
+}
+
+type AuthData struct {
+	Token string `json:"token"`
 }
 
 func TestSimpleRequest(t *testing.T) {
@@ -120,5 +125,34 @@ func TestGETRequestWithParameters(t *testing.T) {
 				t.Fatalf("Expect product's category contains 'laptop', actually %s", product.Category)
 			}
 		}
+	}
+}
+
+func TestRequestWithHeader(t *testing.T) {
+	cli := New(Config{
+		BaseURL: "https://dummyjson.com",
+	})
+
+	authData, _, err := ToObject[AuthData](cli.POST("/auth/login", RequestOptions{
+		Body: map[string]any{
+			"username": "atuny0",
+			"password": "9uQFF1Lh",
+		},
+	}))
+	if err != nil {
+		t.Fatalf("Unexpected request error: %v", err)
+	}
+
+	cli.Headers["Authorization"] = []string{authData.Token}
+
+	data, resp, err := ToObject[ExampleProduct](cli.GET("/auth/products/1"))
+	if err != nil {
+		t.Fatalf("Unexpected request error: %v", err)
+	} else if resp.StatusCode != http.StatusOK {
+		t.Fatalf("Unexpected HTTP status code: %d(%s)", resp.StatusCode, resp.Status)
+	}
+
+	if data.ID != 1 {
+		t.Fatalf("Expect product's id is 1, actually %d", data.ID)
 	}
 }
