@@ -9,7 +9,7 @@ type Client struct {
 	// BaseURL will be prepended to all request URL unless URL is absolute.
 	BaseURL string
 	// Headers are custom headers to be sent.
-	Headers http.Header
+	Headers map[string][]string
 
 	// clientPool is for save http.Client instances.
 	clientPool sync.Pool
