@@ -16,14 +16,12 @@ func (cli *Client) getRequestBody(opt RequestOptions) (io.Reader, error) {
 	contentType := getContentType(opt.ContentType)
 
 	switch contentType {
-	case "application/json", "": // Default JSON
+	default:
 		data, err := json.Marshal(body)
 		if err != nil {
 			return nil, err
 		}
 
 		return bytes.NewReader(data), nil
-	default:
-		return nil, ErrUnsupportedContentType
 	}
 }

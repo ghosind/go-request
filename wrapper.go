@@ -20,7 +20,7 @@ func ToObject[T any](resp *http.Response, err error) (*T, *http.Response, error)
 
 	contentType := resp.Header.Get("Content-Type")
 	switch getContentType(contentType) {
-	case "application/json":
+	default:
 		if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 			return nil, resp, err
 		}
