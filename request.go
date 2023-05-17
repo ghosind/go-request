@@ -17,6 +17,8 @@ type RequestOptions struct {
 	Body        any
 	Method      string
 	ContentType string
+	// UserAgent sets the client's User-Agent field in the request header.
+	UserAgent string
 }
 
 func (cli *Client) request(method, url string, opts ...RequestOptions) (*http.Response, error) {
@@ -98,6 +100,14 @@ func (cli *Client) addHeadersToRequest(req *http.Request, opt RequestOptions) {
 	}
 	if ct := req.Header.Get("Content-Type"); ct == "" {
 		req.Header.Set("Content-Type", "application/json") // Set default content type
+	}
+
+	userAgent := opt.UserAgent
+	if userAgent == "" && cli.UserAgent != "" {
+		userAgent = cli.UserAgent
+	}
+	if userAgent != "" {
+		req.Header.Set("User-Agent", userAgent)
 	}
 }
 

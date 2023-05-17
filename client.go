@@ -10,6 +10,8 @@ type Client struct {
 	BaseURL string
 	// Headers are custom headers to be sent.
 	Headers map[string][]string
+	// UserAgent sets the client's User-Agent field in the request header.
+	UserAgent string
 
 	// clientPool is for save http.Client instances.
 	clientPool sync.Pool
@@ -25,6 +27,8 @@ type Config struct {
 	// Headers are custom headers to be sent, and they'll be overwritten if the
 	// same key is presented in the request.
 	Headers map[string][]string
+	// UserAgent sets the client's User-Agent field in the request header.
+	UserAgent string
 }
 
 const (
