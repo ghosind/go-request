@@ -89,6 +89,10 @@ func (cli *Client) addHeadersToRequest(req *http.Request, opt RequestOptions) {
 
 	if cli.Headers != nil {
 		for k, v := range cli.Headers {
+			if _, existed := req.Header[k]; existed {
+				continue
+			}
+
 			for _, val := range v {
 				req.Header.Add(k, val)
 			}
