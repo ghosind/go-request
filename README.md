@@ -159,7 +159,7 @@ There are the available config options for performing a request, and all fields 
 
 | Field | Type | Description |
 |:-----:|:----:|-------------|
-| `BaseURL` | `string` | The base url for all requests that performing by this client instance. |
+| `BaseURL` | `string` | The base url for this requests. |
 | `Parameters` | `map[string][]string` | Custom query string parameters to be sent. |
 | `Headers` | `map[string][]string` | Custom headers to be sent. |
 | `Timeout` | `int` | Timeout in milliseconds. |
