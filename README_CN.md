@@ -6,6 +6,8 @@
 ![License Badge](https://img.shields.io/github/license/ghosind/go-request)
 [![Go Reference](https://pkg.go.dev/badge/github.com/ghosind/go-request.svg)](https://pkg.go.dev/github.com/ghosind/go-request)
 
+简体中文 | [English](./README.md)
+
 一个易用的Golang HTTP请求工具库。
 
 - [特性](#特性)
