@@ -60,7 +60,7 @@ func (cli *Client) makeRequest(method, url string, opt RequestOptions) (*http.Re
 		return nil, nil, err
 	}
 
-	body, err := cli.getRequestBody(opt)
+	body, err := cli.encodeRequestBody(opt)
 	if err != nil {
 		return nil, nil, err
 	}
