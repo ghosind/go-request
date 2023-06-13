@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"time"
 )
 
@@ -20,6 +21,8 @@ type RequestOptions struct {
 	// UserAgent sets the client's User-Agent field in the request header.
 	UserAgent string
 }
+
+var urlPattern *regexp.Regexp = regexp.MustCompile(`^https?://`)
 
 func (cli *Client) request(method, url string, opts ...RequestOptions) (*http.Response, error) {
 	var opt RequestOptions
@@ -116,7 +119,7 @@ func (cli *Client) addHeadersToRequest(req *http.Request, opt RequestOptions) {
 }
 
 func (cli *Client) parseURL(uri string, opt RequestOptions) (string, error) {
-	baseURL, uri, err := cli.getURL(uri, opt)
+	baseURL, extraPath, err := cli.getURL(uri, opt)
 	if err != nil {
 		return "", err
 	}
@@ -126,8 +129,8 @@ func (cli *Client) parseURL(uri string, opt RequestOptions) (string, error) {
 		return "", err
 	}
 
-	if uri != "" {
-		obj.Path = path.Join(obj.Path, uri)
+	if extraPath != "" {
+		obj.Path = path.Join(obj.Path, extraPath)
 	}
 
 	if opt.Parameters != nil {
@@ -146,21 +149,32 @@ func (cli *Client) parseURL(uri string, opt RequestOptions) (string, error) {
 	return obj.String(), nil
 }
 
-func (cli *Client) getURL(uri string, opt RequestOptions) (string, string, error) {
+// getURL returns the base url and extra path components from url parameter, optional config, and
+// instance config.
+func (cli *Client) getURL(url string, opt RequestOptions) (string, string, error) {
+	if url != "" && urlPattern.MatchString(url) {
+		return url, "", nil
+	}
+
 	baseURL := opt.BaseURL
 	if baseURL == "" && cli.BaseURL != "" {
 		baseURL = cli.BaseURL
 	}
 	if baseURL == "" {
-		baseURL = uri
-		uri = ""
+		baseURL = url
+		url = ""
 	}
 
 	if baseURL == "" {
 		return "", "", ErrNoURL
 	}
 
-	return baseURL, uri, nil
+	if !urlPattern.MatchString(baseURL) {
+		// prepend https as scheme if no scheme part in the url.
+		baseURL = "https://" + baseURL
+	}
+
+	return baseURL, url, nil
 }
 
 func (cli *Client) getContext(opt RequestOptions) (context.Context, context.CancelFunc) {
