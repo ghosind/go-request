@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/ghosind/go-assert"
 )
 
 type ExampleProduct struct {
@@ -23,39 +25,40 @@ type AuthData struct {
 }
 
 func TestSimpleRequest(t *testing.T) {
+	a := assert.New(t)
+
 	data, _, err := ToString(Request("https://dummyjson.com/products/1"))
-	if err != nil {
-		t.Fatalf("Unexpected request error: %v", err)
+	if e := a.Nil(err); e != nil {
+		a.FailNow()
 	}
 
-	if len(data) == 0 {
-		t.Fatalf("Expect data's length is not 0")
+	if e := a.NotDeepEqual(len(data), 0); e != nil {
+		a.FailNow()
 	}
 
 	product := new(ExampleProduct)
-	if err := json.Unmarshal([]byte(data), &product); err != nil {
-		t.Fatalf("Unexpected unmarshal error: %v", err)
+	if e := a.Nil(json.Unmarshal([]byte(data), &product)); e != nil {
+		a.FailNow()
 	}
 
-	if product.ID != 1 {
-		t.Fatalf("Expect product's id is 1, actually %d", product.ID)
-	}
+	a.DeepEqual(product.ID, int64(1))
 }
 
 func TestGetRequest(t *testing.T) {
+	a := assert.New(t)
+
 	data, _, err := ToObject[ExampleProduct](GET("/products/1", RequestOptions{
 		BaseURL: "https://dummyjson.com",
 	}))
-	if err != nil {
-		t.Fatalf("Unexpected request error: %v", err)
+	if e := a.Nil(err); e != nil {
+		a.FailNow()
 	}
 
-	if data.ID != 1 {
-		t.Fatalf("Expect product's id is 1, actually %d", data.ID)
-	}
+	a.DeepEqual(data.ID, int64(1))
 }
 
 func TestPOSTRequest(t *testing.T) {
+	a := assert.New(t)
 	title := "MacBook Pro"
 
 	data, _, err := ToObject[ExampleProduct](POST("/products/add", RequestOptions{
@@ -65,16 +68,15 @@ func TestPOSTRequest(t *testing.T) {
 			"title": title,
 		},
 	}))
-	if err != nil {
-		t.Fatalf("Unexpected request error: %v", err)
+	if e := a.Nil(err); e != nil {
+		a.FailNow()
 	}
 
-	if data.Title != title {
-		t.Fatalf("Expect product's title is \"%s\", actually \"%s\"", title, data.Title)
-	}
+	a.DeepEqual(data.Title, title)
 }
 
 func TestPUTRequest(t *testing.T) {
+	a := assert.New(t)
 	title := "Apple"
 
 	data, _, err := ToObject[ExampleProduct](PUT("/products/1", RequestOptions{
@@ -84,30 +86,31 @@ func TestPUTRequest(t *testing.T) {
 			"title": title,
 		},
 	}))
-	if err != nil {
-		t.Fatalf("Unexpected request error: %v", err)
+	if e := a.Nil(err); e != nil {
+		a.FailNow()
 	}
 
-	if data.Title != title {
-		t.Fatalf("Expect product's title is \"%s\", actually \"%s\"", title, data.Title)
-	}
+	a.DeepEqual(data.Title, title)
 }
 
 func TestDeleteRequest(t *testing.T) {
+	a := assert.New(t)
 	data, _, err := ToObject[ExampleProduct](DELETE("/products/1", RequestOptions{
 		BaseURL: "https://dummyjson.com/",
 		Timeout: RequestTimeoutNone,
 	}))
-	if err != nil {
-		t.Fatalf("Unexpected request error: %v", err)
+	if e := a.Nil(err); e != nil {
+		a.FailNow()
 	}
 
-	if data.IsDeleted == nil || *data.IsDeleted != true {
-		t.Fatalf("Expect product's isDelete is true")
+	if e := a.NotNil(data.IsDeleted); e == nil {
+		a.DeepEqual(*data.IsDeleted, true)
 	}
 }
 
 func TestGETRequestWithParameters(t *testing.T) {
+	a := assert.New(t)
+
 	data, _, err := ToObject[ExampleProductsSearchData](GET("/products/search", RequestOptions{
 		BaseURL: "https://dummyjson.com",
 		Parameters: map[string][]string{
@@ -115,20 +118,21 @@ func TestGETRequestWithParameters(t *testing.T) {
 		},
 		Timeout: 3 * 1000,
 	}))
-	if err != nil {
-		t.Fatalf("Unexpected request error: %v", err)
+	if e := a.Nil(err); e != nil {
+		a.FailNow()
 	}
 
-	if data.Products != nil {
-		for _, product := range *data.Products {
-			if !strings.Contains(product.Category, "laptop") {
-				t.Fatalf("Expect product's category contains 'laptop', actually %s", product.Category)
-			}
-		}
+	if e := a.NotNil(data.Products); e != nil {
+		a.FailNow()
+	}
+
+	for _, product := range *data.Products {
+		a.DeepEqual(strings.Contains(product.Category, "laptop"), true)
 	}
 }
 
 func TestRequestWithHeader(t *testing.T) {
+	a := assert.New(t)
 	cli := New(Config{
 		BaseURL: "https://dummyjson.com",
 	})
@@ -139,20 +143,17 @@ func TestRequestWithHeader(t *testing.T) {
 			"password": "9uQFF1Lh",
 		},
 	}))
-	if err != nil {
-		t.Fatalf("Unexpected request error: %v", err)
+	if e := a.Nil(err); e != nil {
+		a.FailNow()
 	}
 
 	cli.Headers["Authorization"] = []string{authData.Token}
 
 	data, resp, err := ToObject[ExampleProduct](cli.GET("/auth/products/1"))
-	if err != nil {
-		t.Fatalf("Unexpected request error: %v", err)
-	} else if resp.StatusCode != http.StatusOK {
-		t.Fatalf("Unexpected HTTP status code: %d(%s)", resp.StatusCode, resp.Status)
+	if e := a.Nil(err); e != nil {
+		a.FailNow()
 	}
 
-	if data.ID != 1 {
-		t.Fatalf("Expect product's id is 1, actually %d", data.ID)
-	}
+	a.DeepEqual(resp.StatusCode, http.StatusOK)
+	a.DeepEqual(data.ID, int64(1))
 }

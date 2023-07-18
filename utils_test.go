@@ -1,17 +1,15 @@
 package request
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/ghosind/go-assert"
+)
 
 func TestGetContentType(t *testing.T) {
-	if ct := getContentType(""); ct != "" {
-		t.Errorf("Expect content type is \"\", actually \"%s\"", ct)
-	}
+	a := assert.New(t)
 
-	if ct := getContentType("application/json"); ct != "application/json" {
-		t.Errorf("Expect content type is \"application/json\", actually \"%s\"", ct)
-	}
-
-	if ct := getContentType("application/json; charset=utf8"); ct != "application/json" {
-		t.Errorf("Expect content type is \"application/json\", actually \"%s\"", ct)
-	}
+	a.DeepEqual(getContentType(""), "")
+	a.DeepEqual(getContentType("application/json"), "application/json")
+	a.DeepEqual(getContentType("application/json; charset=utf8"), "application/json")
 }
