@@ -192,7 +192,7 @@ func (cli *Client) getContext(opt RequestOptions) (context.Context, context.Canc
 	}
 
 	if timeout == RequestTimeoutNone {
-		return context.WithCancel(baseCtx)
+		return baseCtx, nil
 	} else {
 		return context.WithTimeout(baseCtx, time.Duration(timeout)*time.Millisecond)
 	}
