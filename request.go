@@ -20,6 +20,14 @@ type RequestOptions struct {
 	ContentType string
 	// UserAgent sets the client's User-Agent field in the request header.
 	UserAgent string
+	// Auth indicates that HTTP Basic auth should be used. It will set an `Authorization` header,
+	// and it'll also overwriting any existing `Authorization` field in the request header.
+	Auth *AuthConfig
+}
+
+type AuthConfig struct {
+	Username string
+	Password string
 }
 
 var urlPattern *regexp.Regexp = regexp.MustCompile(`^https?://`)
@@ -77,6 +85,10 @@ func (cli *Client) makeRequest(method, url string, opt RequestOptions) (*http.Re
 	}
 
 	cli.addHeadersToRequest(req, opt)
+
+	if opt.Auth != nil {
+		req.SetBasicAuth(opt.Auth.Username, opt.Auth.Password)
+	}
 
 	return req, canFunc, nil
 }
