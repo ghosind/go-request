@@ -28,6 +28,12 @@ func TestToObject(t *testing.T) {
 	a.NotNilNow(err)
 
 	data, _, err := ToObject[testResponse](&http.Response{
+		Body: io.NopCloser(bytes.NewReader([]byte(""))),
+	}, nil)
+	a.NilNow(err)
+	a.NilNow(data)
+
+	data, _, err = ToObject[testResponse](&http.Response{
 		Body: io.NopCloser(bytes.NewReader([]byte(`{"method":"GET"}`))),
 	}, nil)
 	a.NilNow(err)

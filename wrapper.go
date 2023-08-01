@@ -18,13 +18,19 @@ func ToObject[T any](resp *http.Response, err error) (*T, *http.Response, error)
 	}
 
 	defer resp.Body.Close()
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, resp, err
+	} else if len(data) == 0 {
+		return nil, resp, nil
+	}
 
 	out := new(T)
 
 	contentType := resp.Header.Get("Content-Type")
 	switch getContentType(contentType) {
 	default:
-		if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		if err := json.Unmarshal(data, &out); err != nil {
 			return nil, resp, err
 		}
 	}
