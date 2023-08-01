@@ -30,7 +30,7 @@ type testResponse struct {
 	Token       *string `json:"token"`
 }
 
-func TestSimpleRequest(t *testing.T) {
+func TestRequestWithoutOptions(t *testing.T) {
 	a := assert.New(t)
 
 	data, _, err := ToString(Request("http://localhost:8080/test"))
@@ -47,10 +47,10 @@ func TestSimpleRequest(t *testing.T) {
 	a.DeepEqualNow(*payload.Path, "/test")
 }
 
-func TestGetRequest(t *testing.T) {
+func TestRequestWithOptions(t *testing.T) {
 	a := assert.New(t)
 
-	data, _, err := ToObject[testResponse](GET("", RequestOptions{
+	data, _, err := ToObject[testResponse](Request("", RequestOptions{
 		BaseURL: "http://localhost:8080",
 	}))
 	a.NilNow(err)
@@ -59,12 +59,35 @@ func TestGetRequest(t *testing.T) {
 	a.DeepEqualNow(*data.Method, "GET")
 }
 
-func TestPOSTRequest(t *testing.T) {
+func TestRequestMethods(t *testing.T) {
 	a := assert.New(t)
 
-	data, _, err := ToObject[testResponse](POST("", RequestOptions{
-		BaseURL: "http://localhost:8080",
-		Timeout: RequestTimeoutNoLimit,
+	for method, fn := range map[string]func(string, ...RequestOptions) (*http.Response, error){
+		"DELETE":  DELETE,
+		"GET":     GET,
+		"HEAD":    HEAD,
+		"OPTIONS": OPTIONS,
+		"PATCH":   PATCH,
+		"POST":    POST,
+		"PUT":     PUT,
+	} {
+		data, _, err := ToObject[testResponse](fn("http://localhost:8080"))
+		a.NilNow(err, method)
+
+		if method == "HEAD" {
+			// no body for HEAD
+			continue
+		}
+
+		a.NotNilNow(data.Method)
+		a.DeepEqualNow(*data.Method, method)
+	}
+}
+
+func TestRequestWithBody(t *testing.T) {
+	a := assert.New(t)
+
+	data, _, err := ToObject[testResponse](POST("http://localhost:8080", RequestOptions{
 		Body: map[string]any{
 			"data": "Hello world!",
 		},
@@ -79,68 +102,36 @@ func TestPOSTRequest(t *testing.T) {
 	a.DeepEqualNow(*data.Body, `{"data":"Hello world!"}`)
 }
 
-func TestPUTRequest(t *testing.T) {
+func TestRequestWithParameters(t *testing.T) {
 	a := assert.New(t)
 
-	data, _, err := ToObject[testResponse](PUT("/", RequestOptions{
-		BaseURL: "http://localhost:8080",
-		Timeout: RequestTimeoutNoLimit,
-		Body: map[string]any{
-			"data": "Hello world!",
-		},
-	}))
-	a.NilNow(err)
-
-	a.NotNilNow(data.Method)
-	a.NotNilNow(data.Body)
-	a.DeepEqualNow(*data.Method, "PUT")
-	a.DeepEqualNow(*data.Body, `{"data":"Hello world!"}`)
-}
-
-func TestDeleteRequest(t *testing.T) {
-	a := assert.New(t)
-	data, _, err := ToObject[testResponse](DELETE("/", RequestOptions{
-		BaseURL: "http://localhost:8080",
-		Timeout: RequestTimeoutNoLimit,
-	}))
-	a.NilNow(err)
-
-	a.NotNilNow(data.Method)
-	a.DeepEqualNow(*data.Method, "DELETE")
-}
-
-func TestGETRequestWithParameters(t *testing.T) {
-	a := assert.New(t)
-
-	data, _, err := ToObject[testResponse](GET("", RequestOptions{
-		BaseURL: "http://localhost:8080",
+	data, _, err := ToObject[testResponse](GET("http://localhost:8080", RequestOptions{
 		Parameters: map[string][]string{
 			"q": {"test"},
+			"v": {"1"},
 		},
-		Timeout: 3 * 1000,
 	}))
 	a.NilNow(err)
 
 	a.NotNilNow(data.Query)
-	a.DeepEqualNow(*data.Query, "q=test")
+	a.DeepEqualNow(*data.Query, "q=test&v=1")
 }
 
 func TestRequestWithHeader(t *testing.T) {
 	a := assert.New(t)
-	cli := New(Config{
-		BaseURL: "http://localhost:8080",
-	})
 
-	cli.Headers["Authorization"] = []string{"test-token"}
-
-	data, _, err := ToObject[testResponse](cli.GET("/"))
+	data, _, err := ToObject[testResponse](GET("http://localhost:8080", RequestOptions{
+		Headers: map[string][]string{
+			"Authorization": {"test-token"},
+		},
+	}))
 	a.NilNow(err)
 
 	a.NotNilNow(data.Token)
 	a.DeepEqualNow(*data.Token, "test-token")
 }
 
-func TestGetMethod(t *testing.T) {
+func TestGetRequestMethod(t *testing.T) {
 	a := assert.New(t)
 	cli := New()
 
