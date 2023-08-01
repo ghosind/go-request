@@ -2,158 +2,138 @@ package request
 
 import (
 	"encoding/json"
-	"net/http"
-	"strings"
+	"os"
 	"testing"
 
 	"github.com/ghosind/go-assert"
+	"github.com/ghosind/go-request/internal"
 )
 
-type ExampleProduct struct {
-	ID        int64  `json:"id"`
-	Title     string `json:"title"`
-	Category  string `json:"category"`
-	IsDeleted *bool  `json:"isDeleted,omitempty"`
+func TestMain(m *testing.M) {
+	server := internal.NewMockServer()
+	go server.Run()
+
+	status := m.Run()
+
+	server.Shutdown()
+	os.Exit(status)
 }
 
-type ExampleProductsSearchData struct {
-	Products *[]ExampleProduct
-}
-
-type AuthData struct {
-	Token string `json:"token"`
+type testResponse struct {
+	Path        *string `json:"path"`
+	Method      *string `json:"method"`
+	ContentType *string `json:"contentType"`
+	Body        *string `json:"body"`
+	Query       *string `json:"query"`
+	Token       *string `json:"token"`
 }
 
 func TestSimpleRequest(t *testing.T) {
 	a := assert.New(t)
 
-	data, _, err := ToString(Request("https://dummyjson.com/products/1"))
-	if e := a.Nil(err); e != nil {
-		a.FailNow()
-	}
+	data, _, err := ToString(Request("http://localhost:8080/test"))
+	a.NilNow(err)
 
-	if e := a.NotDeepEqual(len(data), 0); e != nil {
-		a.FailNow()
-	}
+	a.NotDeepEqualNow(len(data), 0)
 
-	product := new(ExampleProduct)
-	if e := a.Nil(json.Unmarshal([]byte(data), &product)); e != nil {
-		a.FailNow()
-	}
+	payload := new(testResponse)
+	a.NilNow(json.Unmarshal([]byte(data), &payload))
 
-	a.DeepEqual(product.ID, int64(1))
+	a.NotNilNow(payload.Method)
+	a.NotNilNow(payload.Path)
+	a.DeepEqualNow(*payload.Method, "GET")
+	a.DeepEqualNow(*payload.Path, "/test")
 }
 
 func TestGetRequest(t *testing.T) {
 	a := assert.New(t)
 
-	data, _, err := ToObject[ExampleProduct](GET("/products/1", RequestOptions{
-		BaseURL: "https://dummyjson.com",
+	data, _, err := ToObject[testResponse](GET("", RequestOptions{
+		BaseURL: "http://localhost:8080",
 	}))
-	if e := a.Nil(err); e != nil {
-		a.FailNow()
-	}
+	a.NilNow(err)
 
-	a.DeepEqual(data.ID, int64(1))
+	a.NotNilNow(data.Method)
+	a.DeepEqualNow(*data.Method, "GET")
 }
 
 func TestPOSTRequest(t *testing.T) {
 	a := assert.New(t)
-	title := "MacBook Pro"
 
-	data, _, err := ToObject[ExampleProduct](POST("/products/add", RequestOptions{
-		BaseURL: "https://dummyjson.com/",
+	data, _, err := ToObject[testResponse](POST("", RequestOptions{
+		BaseURL: "http://localhost:8080",
 		Timeout: RequestTimeoutNoLimit,
 		Body: map[string]any{
-			"title": title,
+			"data": "Hello world!",
 		},
 	}))
-	if e := a.Nil(err); e != nil {
-		a.FailNow()
-	}
+	a.NilNow(err)
 
-	a.DeepEqual(data.Title, title)
+	a.NotNilNow(data.Method)
+	a.NotNilNow(data.ContentType)
+	a.NotNilNow(data.Body)
+	a.DeepEqualNow(*data.Method, "POST")
+	a.DeepEqualNow(*data.ContentType, "application/json")
+	a.DeepEqualNow(*data.Body, `{"data":"Hello world!"}`)
 }
 
 func TestPUTRequest(t *testing.T) {
 	a := assert.New(t)
-	title := "Apple"
 
-	data, _, err := ToObject[ExampleProduct](PUT("/products/1", RequestOptions{
-		BaseURL: "https://dummyjson.com/",
+	data, _, err := ToObject[testResponse](PUT("/", RequestOptions{
+		BaseURL: "http://localhost:8080",
 		Timeout: RequestTimeoutNoLimit,
 		Body: map[string]any{
-			"title": title,
+			"data": "Hello world!",
 		},
 	}))
-	if e := a.Nil(err); e != nil {
-		a.FailNow()
-	}
+	a.NilNow(err)
 
-	a.DeepEqual(data.Title, title)
+	a.NotNilNow(data.Method)
+	a.NotNilNow(data.Body)
+	a.DeepEqualNow(*data.Method, "PUT")
+	a.DeepEqualNow(*data.Body, `{"data":"Hello world!"}`)
 }
 
 func TestDeleteRequest(t *testing.T) {
 	a := assert.New(t)
-	data, _, err := ToObject[ExampleProduct](DELETE("/products/1", RequestOptions{
-		BaseURL: "https://dummyjson.com/",
+	data, _, err := ToObject[testResponse](DELETE("/", RequestOptions{
+		BaseURL: "http://localhost:8080",
 		Timeout: RequestTimeoutNoLimit,
 	}))
-	if e := a.Nil(err); e != nil {
-		a.FailNow()
-	}
+	a.NilNow(err)
 
-	if e := a.NotNil(data.IsDeleted); e == nil {
-		a.DeepEqual(*data.IsDeleted, true)
-	}
+	a.NotNilNow(data.Method)
+	a.DeepEqualNow(*data.Method, "DELETE")
 }
 
 func TestGETRequestWithParameters(t *testing.T) {
 	a := assert.New(t)
 
-	data, _, err := ToObject[ExampleProductsSearchData](GET("/products/search", RequestOptions{
-		BaseURL: "https://dummyjson.com",
+	data, _, err := ToObject[testResponse](GET("", RequestOptions{
+		BaseURL: "http://localhost:8080",
 		Parameters: map[string][]string{
-			"q": {"laptop"},
+			"q": {"test"},
 		},
 		Timeout: 3 * 1000,
 	}))
-	if e := a.Nil(err); e != nil {
-		a.FailNow()
-	}
+	a.NilNow(err)
 
-	if e := a.NotNil(data.Products); e != nil {
-		a.FailNow()
-	}
-
-	for _, product := range *data.Products {
-		a.DeepEqual(strings.Contains(product.Category, "laptop"), true)
-	}
+	a.NotNilNow(data.Query)
+	a.DeepEqualNow(*data.Query, "q=test")
 }
 
 func TestRequestWithHeader(t *testing.T) {
 	a := assert.New(t)
 	cli := New(Config{
-		BaseURL: "https://dummyjson.com",
+		BaseURL: "http://localhost:8080",
 	})
 
-	authData, _, err := ToObject[AuthData](cli.POST("/auth/login", RequestOptions{
-		Body: map[string]any{
-			"username": "atuny0",
-			"password": "9uQFF1Lh",
-		},
-	}))
-	if e := a.Nil(err); e != nil {
-		a.FailNow()
-	}
+	cli.Headers["Authorization"] = []string{"test-token"}
 
-	cli.Headers["Authorization"] = []string{authData.Token}
+	data, _, err := ToObject[testResponse](cli.GET("/"))
+	a.NilNow(err)
 
-	data, resp, err := ToObject[ExampleProduct](cli.GET("/auth/products/1"))
-	if e := a.Nil(err); e != nil {
-		a.FailNow()
-	}
-
-	a.DeepEqual(resp.StatusCode, http.StatusOK)
-	a.DeepEqual(data.ID, int64(1))
+	a.NotNilNow(data.Token)
+	a.DeepEqualNow(*data.Token, "test-token")
 }
