@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -62,11 +63,12 @@ func (cli *Client) request(method, url string, opts ...RequestOptions) (*http.Re
 }
 
 func (cli *Client) makeRequest(method, url string, opt RequestOptions) (*http.Request, context.CancelFunc, error) {
-	if method == "" {
-		method = http.MethodGet
+	method, err := cli.getRequestMethod(method)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	url, err := cli.parseURL(url, opt)
+	url, err = cli.parseURL(url, opt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -91,6 +93,23 @@ func (cli *Client) makeRequest(method, url string, opt RequestOptions) (*http.Re
 	}
 
 	return req, canFunc, nil
+}
+
+// getRequestMethod validates and returns the HTTP method of the request. It'll return "GET" if the
+// value of the method is empty.
+func (cli *Client) getRequestMethod(method string) (string, error) {
+	if method == "" {
+		return http.MethodGet, nil
+	}
+
+	method = strings.ToUpper(method)
+	switch method {
+	case http.MethodConnect, http.MethodDelete, http.MethodGet, http.MethodHead, http.MethodOptions,
+		http.MethodPatch, http.MethodPost, http.MethodPut, http.MethodTrace:
+		return method, nil
+	default:
+		return "", ErrInvalidMethod
+	}
 }
 
 func (cli *Client) addHeadersToRequest(req *http.Request, opt RequestOptions) {
