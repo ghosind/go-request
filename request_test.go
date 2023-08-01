@@ -63,7 +63,7 @@ func TestPOSTRequest(t *testing.T) {
 
 	data, _, err := ToObject[ExampleProduct](POST("/products/add", RequestOptions{
 		BaseURL: "https://dummyjson.com/",
-		Timeout: RequestTimeoutNone,
+		Timeout: RequestTimeoutNoLimit,
 		Body: map[string]any{
 			"title": title,
 		},
@@ -81,7 +81,7 @@ func TestPUTRequest(t *testing.T) {
 
 	data, _, err := ToObject[ExampleProduct](PUT("/products/1", RequestOptions{
 		BaseURL: "https://dummyjson.com/",
-		Timeout: RequestTimeoutNone,
+		Timeout: RequestTimeoutNoLimit,
 		Body: map[string]any{
 			"title": title,
 		},
@@ -97,7 +97,7 @@ func TestDeleteRequest(t *testing.T) {
 	a := assert.New(t)
 	data, _, err := ToObject[ExampleProduct](DELETE("/products/1", RequestOptions{
 		BaseURL: "https://dummyjson.com/",
-		Timeout: RequestTimeoutNone,
+		Timeout: RequestTimeoutNoLimit,
 	}))
 	if e := a.Nil(err); e != nil {
 		a.FailNow()

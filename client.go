@@ -34,8 +34,8 @@ type Config struct {
 const (
 	// RequestTimeoutDefault is the default timeout for request.
 	RequestTimeoutDefault int = 1000
-	// RequestTimeoutNone means no timeout limitation.
-	RequestTimeoutNone int = -1
+	// RequestTimeoutNoLimit means no timeout limitation.
+	RequestTimeoutNoLimit int = -1
 )
 
 // New creates and returns a new Client instance.

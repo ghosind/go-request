@@ -189,6 +189,8 @@ func (cli *Client) getURL(url string, opt RequestOptions) (string, string, error
 	return baseURL, url, nil
 }
 
+// getContext creates a Context by the request options or client settings, or returns the Context
+// that is set in the request options.
 func (cli *Client) getContext(opt RequestOptions) (context.Context, context.CancelFunc) {
 	if opt.Context != nil {
 		return opt.Context, nil
@@ -197,13 +199,13 @@ func (cli *Client) getContext(opt RequestOptions) (context.Context, context.Canc
 	baseCtx := context.Background()
 
 	timeout := RequestTimeoutDefault
-	if opt.Timeout > 0 || opt.Timeout == RequestTimeoutNone {
+	if opt.Timeout > 0 || opt.Timeout == RequestTimeoutNoLimit {
 		timeout = opt.Timeout
-	} else if cli.timeout > 0 || cli.timeout == RequestTimeoutNone {
+	} else if cli.timeout > 0 || cli.timeout == RequestTimeoutNoLimit {
 		timeout = cli.timeout
 	}
 
-	if timeout == RequestTimeoutNone {
+	if timeout == RequestTimeoutNoLimit {
 		return baseCtx, nil
 	} else {
 		return context.WithTimeout(baseCtx, time.Duration(timeout)*time.Millisecond)
