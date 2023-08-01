@@ -13,6 +13,9 @@ func ToObject[T any](resp *http.Response, err error) (*T, *http.Response, error)
 	if err != nil {
 		return nil, nil, err
 	}
+	if resp == nil || resp.Body == nil {
+		return nil, nil, ErrInvalidResp
+	}
 
 	defer resp.Body.Close()
 
@@ -34,6 +37,9 @@ func ToObject[T any](resp *http.Response, err error) (*T, *http.Response, error)
 func ToString(resp *http.Response, err error) (string, *http.Response, error) {
 	if err != nil {
 		return "", nil, err
+	}
+	if resp == nil || resp.Body == nil {
+		return "", nil, ErrInvalidResp
 	}
 
 	defer resp.Body.Close()
