@@ -29,6 +29,51 @@ func TestGetRequestMethod(t *testing.T) {
 	a.NotNil(err)
 }
 
+func TestGetURL(t *testing.T) {
+	a := assert.New(t)
+	cli := New()
+
+	_, _, err := cli.getURL("", RequestOptions{})
+	a.NotNilNow(err)
+
+	baseUrl, url, err := cli.getURL("http://www.example.com", RequestOptions{})
+	a.NilNow(err)
+	a.DeepEqualNow(baseUrl, "http://www.example.com")
+	a.DeepEqualNow(url, "")
+
+	baseUrl, url, err = cli.getURL("www.example.com", RequestOptions{})
+	a.NilNow(err)
+	a.DeepEqualNow(baseUrl, "https://www.example.com")
+	a.DeepEqualNow(url, "")
+
+	baseUrl, url, err = cli.getURL("", RequestOptions{
+		BaseURL: "http://www.example.com",
+	})
+	a.NilNow(err)
+	a.DeepEqualNow(baseUrl, "http://www.example.com")
+	a.DeepEqualNow(url, "")
+
+	baseUrl, url, err = cli.getURL("/test", RequestOptions{
+		BaseURL: "http://www.example.com",
+	})
+	a.NilNow(err)
+	a.DeepEqualNow(baseUrl, "http://www.example.com")
+	a.DeepEqualNow(url, "/test")
+
+	cli.BaseURL = "http://www.example.com"
+	baseUrl, url, err = cli.getURL("", RequestOptions{})
+	a.NilNow(err)
+	a.DeepEqualNow(baseUrl, "http://www.example.com")
+	a.DeepEqualNow(url, "")
+
+	baseUrl, url, err = cli.getURL("", RequestOptions{
+		BaseURL: "http://www.another.com",
+	})
+	a.NilNow(err)
+	a.DeepEqualNow(baseUrl, "http://www.another.com")
+	a.DeepEqualNow(url, "")
+}
+
 func TestGetContext(t *testing.T) {
 	a := assert.New(t)
 	cli := New()

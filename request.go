@@ -31,7 +31,7 @@ type AuthConfig struct {
 	Password string
 }
 
-var urlPattern *regexp.Regexp = regexp.MustCompile(`^https?://`)
+var urlPattern *regexp.Regexp = regexp.MustCompile(`^https?://.+`)
 
 func (cli *Client) request(method, url string, opts ...RequestOptions) (*http.Response, error) {
 	var opt RequestOptions
