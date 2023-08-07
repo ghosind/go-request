@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/ghosind/go-assert"
@@ -27,6 +28,7 @@ type testResponse struct {
 	Body        *string `json:"body"`
 	Query       *string `json:"query"`
 	Token       *string `json:"token"`
+	UserAgent   *string `json:"userAgent"`
 }
 
 func TestRequestWithoutOptions(t *testing.T) {
@@ -128,4 +130,44 @@ func TestRequestWithHeader(t *testing.T) {
 
 	a.NotNilNow(data.Token)
 	a.DeepEqualNow(*data.Token, "test-token")
+
+	cli := New(Config{
+		Headers: map[string][]string{
+			"Authorization": {"test-token"},
+		},
+	})
+	data, _, err = ToObject[testResponse](cli.GET("http://localhost:8080"))
+	a.NilNow(err)
+
+	a.NotNilNow(data.Token)
+	a.DeepEqualNow(*data.Token, "test-token")
+}
+
+func TestRequestWithUserAgent(t *testing.T) {
+	a := assert.New(t)
+
+	data, _, err := ToObject[testResponse](GET("http://localhost:8080"))
+	a.NilNow(err)
+
+	a.NotNilNow(data.UserAgent)
+	if !regexp.MustCompile(`^Go-http-client`).Match([]byte(*data.UserAgent)) {
+		a.Errorf("UserAgent in the request headers = \"%s\", want start with \"Go-http-client\"", *data.UserAgent)
+	}
+
+	cli := New(Config{
+		UserAgent: "Test-client",
+	})
+	data, _, err = ToObject[testResponse](cli.GET("http://localhost:8080"))
+	a.NilNow(err)
+
+	a.NotNilNow(data.UserAgent)
+	a.DeepEqualNow(*data.UserAgent, "Test-client")
+
+	data, _, err = ToObject[testResponse](cli.GET("http://localhost:8080", RequestOptions{
+		UserAgent: "Another-test-client",
+	}))
+	a.NilNow(err)
+
+	a.NotNilNow(data.UserAgent)
+	a.DeepEqualNow(*data.UserAgent, "Another-test-client")
 }

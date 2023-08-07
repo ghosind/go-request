@@ -54,6 +54,7 @@ func New(config ...Config) *Client {
 
 		cli.BaseURL = cfg.BaseURL
 		cli.timeout = cfg.Timeout
+		cli.UserAgent = cfg.UserAgent
 		cli.setHeader(cfg.Headers)
 	}
 

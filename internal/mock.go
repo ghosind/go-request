@@ -44,6 +44,7 @@ func (server *MockServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		"contentType": req.Header.Get("Content-Type"),
 		"body":        string(payload),
 		"query":       req.URL.RawQuery,
+		"userAgent":   req.Header.Get("User-Agent"),
 	}
 	if token := req.Header.Get("Authorization"); token != "" {
 		body["token"] = token
