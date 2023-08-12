@@ -99,8 +99,6 @@ func (cli *Client) setHeader(headers map[string][]string) {
 		if len(v) > 0 {
 			cli.Headers[k] = make([]string, len(v))
 			copy(cli.Headers[k], v)
-		} else {
-			cli.Headers[k] = nil
 		}
 	}
 }
