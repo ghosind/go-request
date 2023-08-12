@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+const (
+	// RequestContentTypeJSON indicates the request body encodes as a JSON.
+	RequestContentTypeJSON string = "json"
+)
+
 // getRequestBody returns the encoded request body as an io.Reader object. The function will try
 // to get a supported content type from the Header field in the request config, and it will try to
 // serialize the data as a JSON string if no content type or the content type is unsupported.
@@ -43,7 +48,7 @@ func (cli *Client) encodeRequestBody(body any, contentType string) ([]byte, erro
 	var handler func(any) ([]byte, error)
 
 	switch strings.ToLower(contentType) {
-	case "", "json":
+	case RequestContentTypeJSON, "":
 		handler = json.Marshal
 	default:
 		return nil, ErrUnsupportedType

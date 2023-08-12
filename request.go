@@ -167,7 +167,7 @@ func (cli *Client) setContentType(req *http.Request, opt RequestOptions) error {
 	}
 
 	switch strings.ToLower(opt.ContentType) {
-	case "", "json":
+	case RequestContentTypeJSON, "":
 		contentType = "application/json"
 	default:
 		return ErrUnsupportedType
