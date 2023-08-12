@@ -168,3 +168,12 @@ func TestRequestWithUserAgent(t *testing.T) {
 	a.NotNilNow(data.UserAgent)
 	a.DeepEqualNow(*data.UserAgent, "Another-test-client")
 }
+
+func TestRequestWithInvalidConfig(t *testing.T) {
+	a := assert.New(t)
+
+	_, err := Request("http://example.com", RequestOptions{
+		Method: "UNKNOWN",
+	})
+	a.NotNilNow(err)
+}

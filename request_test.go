@@ -10,6 +10,73 @@ import (
 	"github.com/ghosind/go-assert"
 )
 
+func TestMakeRequest(t *testing.T) {
+	a := assert.New(t)
+	cli := New()
+
+	// no error
+	_, _, err := cli.makeRequest("", "http://example.com", RequestOptions{})
+	a.NilNow(err)
+
+	// invalid HTTP method
+	_, _, err = cli.makeRequest("UNKNOWN", "http://example.com", RequestOptions{})
+	a.NotNilNow(err)
+
+	// invalid url
+	_, _, err = cli.makeRequest("", "", RequestOptions{})
+	a.NotNilNow(err)
+
+	// invalid content type for encoding body
+	_, _, err = cli.makeRequest("", "http://example.com", RequestOptions{
+		Body:        []string{"Test"},
+		ContentType: "unknown",
+	})
+	a.NotNilNow(err)
+
+	// invalid content type for headers
+	_, _, err = cli.makeRequest("", "http://example.com", RequestOptions{
+		ContentType: "unknown",
+	})
+	a.NotNilNow(err)
+}
+
+func TestGetRequestMethod(t *testing.T) {
+	a := assert.New(t)
+	cli := New()
+
+	method, err := cli.getRequestMethod("")
+	a.Nil(err)
+	a.DeepEqual(method, "GET")
+
+	// valid methods
+	for _, method := range []string{"Connect", "delete", "get", http.MethodHead, "Options", "PATCH", "PoST", "PuT", "TRACE"} {
+		ret, err := cli.getRequestMethod(method)
+		a.Nil(err)
+		a.DeepEqual(ret, strings.ToUpper(method))
+	}
+
+	_, err = cli.getRequestMethod("UNKNOWN")
+	a.NotNil(err)
+}
+
+func TestAttachRequestHeaders(t *testing.T) {
+	a := assert.New(t)
+	cli := New()
+
+	req, err := http.NewRequest("GET", "", nil)
+	if err != nil {
+		a.Fatalf("Unexpected error: %v", err)
+	}
+
+	// No error
+	err = cli.attachRequestHeaders(req, RequestOptions{})
+	a.NilNow(err)
+
+	// invalid content type
+	err = cli.attachRequestHeaders(req, RequestOptions{ContentType: RequestContentTypeJSON})
+	a.NotNilNow(err)
+}
+
 func TestSetHeaders(t *testing.T) {
 	a := assert.New(t)
 	cli := New(Config{
@@ -33,6 +100,30 @@ func TestSetHeaders(t *testing.T) {
 	a.DeepEqual(req.Header.Get("Key1"), "V1")
 	a.DeepEqual(req.Header.Get("Key2"), "V1")
 	a.DeepEqual(req.Header.Get("Key3"), "V3")
+}
+
+func TestBasicAuth(t *testing.T) {
+	a := assert.New(t)
+	cli := New()
+
+	req, err := http.NewRequest("GET", "", nil)
+	if err != nil {
+		a.Fatalf("Unexpected error: %v", err)
+	}
+
+	err = cli.attachRequestHeaders(req, RequestOptions{})
+	a.NilNow(err)
+	a.DeepEqual(req.Header.Get("Authorization"), "")
+	req.Header.Del("Authorization")
+
+	err = cli.attachRequestHeaders(req, RequestOptions{
+		Auth: &AuthConfig{
+			Username: "user",
+			Password: "pass",
+		},
+	})
+	a.NilNow(err)
+	a.DeepEqual(req.Header.Get("Authorization"), "Basic dXNlcjpwYXNz")
 }
 
 func TestSetContentType(t *testing.T) {
@@ -93,47 +184,34 @@ func TestSetUserAgent(t *testing.T) {
 	req.Header.Del("User-Agent")
 }
 
-func TestBasicAuth(t *testing.T) {
+func TestParseURL(t *testing.T) {
 	a := assert.New(t)
 	cli := New()
 
-	req, err := http.NewRequest("GET", "", nil)
-	if err != nil {
-		a.Fatalf("Unexpected error: %v", err)
-	}
+	_, err := cli.parseURL("", RequestOptions{})
+	a.NotNilNow(err)
 
-	err = cli.attachRequestHeaders(req, RequestOptions{})
+	_, err = cli.parseURL("some invalid url", RequestOptions{})
+	a.NotNilNow(err)
+
+	url, err := cli.parseURL("http://example.com", RequestOptions{})
 	a.NilNow(err)
-	a.DeepEqual(req.Header.Get("Authorization"), "")
-	req.Header.Del("Authorization")
+	a.DeepEqual(url, "http://example.com")
 
-	err = cli.attachRequestHeaders(req, RequestOptions{
-		Auth: &AuthConfig{
-			Username: "user",
-			Password: "pass",
+	url, err = cli.parseURL("test", RequestOptions{
+		BaseURL: "http://example.com",
+	})
+	a.NilNow(err)
+	a.DeepEqual(url, "http://example.com/test")
+
+	url, err = cli.parseURL("http://example.com?q=test1&w=1", RequestOptions{
+		Parameters: map[string][]string{
+			"q": {"test2"},
+			"t": {"2"},
 		},
 	})
 	a.NilNow(err)
-	a.DeepEqual(req.Header.Get("Authorization"), "Basic dXNlcjpwYXNz")
-}
-
-func TestGetRequestMethod(t *testing.T) {
-	a := assert.New(t)
-	cli := New()
-
-	method, err := cli.getRequestMethod("")
-	a.Nil(err)
-	a.DeepEqual(method, "GET")
-
-	// valid methods
-	for _, method := range []string{"Connect", "delete", "get", http.MethodHead, "Options", "PATCH", "PoST", "PuT", "TRACE"} {
-		ret, err := cli.getRequestMethod(method)
-		a.Nil(err)
-		a.DeepEqual(ret, strings.ToUpper(method))
-	}
-
-	_, err = cli.getRequestMethod("UNKNOWN")
-	a.NotNil(err)
+	a.DeepEqual(url, "http://example.com?q=test1&q=test2&t=2&w=1")
 }
 
 func TestGetURL(t *testing.T) {
