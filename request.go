@@ -11,13 +11,15 @@ import (
 )
 
 type RequestOptions struct {
-	BaseURL     string
-	Timeout     int
-	Context     context.Context
-	Parameters  map[string][]string
-	Headers     map[string][]string
-	Body        any
-	Method      string
+	BaseURL    string
+	Timeout    int
+	Context    context.Context
+	Parameters map[string][]string
+	Headers    map[string][]string
+	Body       any
+	Method     string
+	// ContentType indicates the type of data that will encode and send to the server. Available
+	// options are: "json", default "json".
 	ContentType string
 	// UserAgent sets the client's User-Agent field in the request header.
 	UserAgent string
@@ -86,7 +88,10 @@ func (cli *Client) makeRequest(method, url string, opt RequestOptions) (*http.Re
 		return nil, nil, err
 	}
 
-	cli.addHeadersToRequest(req, opt)
+	if err := cli.addHeadersToRequest(req, opt); err != nil {
+		canFunc()
+		return nil, nil, err
+	}
 
 	if opt.Auth != nil {
 		req.SetBasicAuth(opt.Auth.Username, opt.Auth.Password)
@@ -112,7 +117,7 @@ func (cli *Client) getRequestMethod(method string) (string, error) {
 	}
 }
 
-func (cli *Client) addHeadersToRequest(req *http.Request, opt RequestOptions) {
+func (cli *Client) addHeadersToRequest(req *http.Request, opt RequestOptions) error {
 	if opt.Headers != nil {
 		for k, v := range opt.Headers {
 			for _, val := range v {
@@ -133,11 +138,8 @@ func (cli *Client) addHeadersToRequest(req *http.Request, opt RequestOptions) {
 		}
 	}
 
-	if opt.ContentType != "" {
-		req.Header.Set("Content-Type", opt.ContentType)
-	}
-	if ct := req.Header.Get("Content-Type"); ct == "" {
-		req.Header.Set("Content-Type", "application/json") // Set default content type
+	if err := cli.setContentType(req, opt); err != nil {
+		return err
 	}
 
 	userAgent := opt.UserAgent
@@ -147,6 +149,28 @@ func (cli *Client) addHeadersToRequest(req *http.Request, opt RequestOptions) {
 	if userAgent != "" {
 		req.Header.Set("User-Agent", userAgent)
 	}
+
+	return nil
+}
+
+// setContentType checks the "Content-Type" field in the request headers, and set it by the
+// "ContentType" field value from the request options if no value is set in the headers.
+func (cli *Client) setContentType(req *http.Request, opt RequestOptions) error {
+	contentType := req.Header.Get("Content-Type")
+	if contentType != "" {
+		return nil
+	}
+
+	switch strings.ToLower(opt.ContentType) {
+	case "", "json":
+		contentType = "application/json"
+	default:
+		return ErrUnsupportedType
+	}
+
+	req.Header.Set("Content-Type", contentType)
+
+	return nil
 }
 
 func (cli *Client) parseURL(uri string, opt RequestOptions) (string, error) {

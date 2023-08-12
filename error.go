@@ -11,4 +11,7 @@ var (
 
 	// ErrNoURL throws when no uri and base url set in the request.
 	ErrNoURL error = errors.New("no url")
+
+	// ErrUnsupportedType throws when the content type is unsupported.
+	ErrUnsupportedType error = errors.New("unsupported content type")
 )

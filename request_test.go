@@ -10,6 +10,41 @@ import (
 	"github.com/ghosind/go-assert"
 )
 
+func TestSetContentType(t *testing.T) {
+	a := assert.New(t)
+	cli := New()
+
+	req, err := http.NewRequest("GET", "", nil)
+	if err != nil {
+		a.Fatalf("Unexpected error: %v", err)
+	}
+
+	err = cli.setContentType(req, RequestOptions{})
+	a.NilNow(err)
+	a.DeepEqual(req.Header.Get("Content-Type"), "application/json")
+	req.Header.Del("Content-Type")
+
+	err = cli.setContentType(req, RequestOptions{
+		ContentType: "json",
+	})
+	a.NilNow(err)
+	a.DeepEqual(req.Header.Get("Content-Type"), "application/json")
+	req.Header.Del("Content-Type")
+
+	req.Header.Set("Content-Type", "application/vnd.github+json")
+	err = cli.setContentType(req, RequestOptions{
+		ContentType: "json",
+	})
+	a.NilNow(err)
+	a.DeepEqual(req.Header.Get("Content-Type"), "application/vnd.github+json")
+	req.Header.Del("Content-Type")
+
+	err = cli.setContentType(req, RequestOptions{
+		ContentType: "unknown",
+	})
+	a.NotNilNow(err)
+}
+
 func TestGetRequestMethod(t *testing.T) {
 	a := assert.New(t)
 	cli := New()

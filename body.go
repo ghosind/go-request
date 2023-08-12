@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"strings"
 )
 
 // getRequestBody returns the encoded request body as an io.Reader object. The function will try
@@ -16,7 +17,7 @@ func (cli *Client) getRequestBody(opt RequestOptions) (io.Reader, error) {
 		return nil, nil
 	}
 
-	data, err := cli.encodeRequestBody(body, getContentType(opt.ContentType))
+	data, err := cli.encodeRequestBody(body, opt.ContentType)
 	if err != nil {
 		return nil, err
 	}
@@ -39,18 +40,14 @@ func (cli *Client) encodeRequestBody(body any, contentType string) ([]byte, erro
 		return []byte(v), nil
 	}
 
-	switch contentType {
+	var handler func(any) ([]byte, error)
+
+	switch strings.ToLower(contentType) {
+	case "", "json":
+		handler = json.Marshal
 	default:
-		return encodeBodyToJSON(body)
-	}
-}
-
-// encodeJSONBody encodes the request body with the standard JSON encoder.
-func encodeBodyToJSON(body any) ([]byte, error) {
-	data, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
+		return nil, ErrUnsupportedType
 	}
 
-	return data, nil
+	return handler(body)
 }
