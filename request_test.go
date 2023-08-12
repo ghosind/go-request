@@ -71,9 +71,10 @@ func TestAttachRequestHeaders(t *testing.T) {
 	// No error
 	err = cli.attachRequestHeaders(req, RequestOptions{})
 	a.NilNow(err)
+	req.Header.Del("Content-Type")
 
 	// invalid content type
-	err = cli.attachRequestHeaders(req, RequestOptions{ContentType: RequestContentTypeJSON})
+	err = cli.attachRequestHeaders(req, RequestOptions{ContentType: "unknown"})
 	a.NotNilNow(err)
 }
 
