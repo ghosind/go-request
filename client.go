@@ -36,6 +36,8 @@ const (
 	RequestTimeoutDefault int = 1000
 	// RequestTimeoutNoLimit means no timeout limitation.
 	RequestTimeoutNoLimit int = -1
+
+	RequestDefaultUserAgent string = "go-request/0.1"
 )
 
 // New creates and returns a new Client instance.
@@ -55,7 +57,7 @@ func New(config ...Config) *Client {
 		cli.BaseURL = cfg.BaseURL
 		cli.timeout = cfg.Timeout
 		cli.UserAgent = cfg.UserAgent
-		cli.setHeader(cfg.Headers)
+		cli.initClientHeaders(cfg.Headers)
 	}
 
 	return cli
@@ -93,8 +95,8 @@ func (cli *Client) PUT(url string, opt ...RequestOptions) (*http.Response, error
 	return cli.request(http.MethodPut, url, opt...)
 }
 
-// setHeader initializes client's Headers field from config.
-func (cli *Client) setHeader(headers map[string][]string) {
+// initClientHeaders initializes client's Headers field from config.
+func (cli *Client) initClientHeaders(headers map[string][]string) {
 	for k, v := range headers {
 		if len(v) > 0 {
 			cli.Headers[k] = make([]string, len(v))

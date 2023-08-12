@@ -21,7 +21,8 @@ type RequestOptions struct {
 	// ContentType indicates the type of data that will encode and send to the server. Available
 	// options are: "json", default "json".
 	ContentType string
-	// UserAgent sets the client's User-Agent field in the request header.
+	// UserAgent sets the client's User-Agent field in the request header. It'll overwrite the value
+	// of the `User-Agent` field in the request headers.
 	UserAgent string
 	// Auth indicates that HTTP Basic auth should be used. It will set an `Authorization` header,
 	// and it'll also overwriting any existing `Authorization` field in the request header.
@@ -88,13 +89,9 @@ func (cli *Client) makeRequest(method, url string, opt RequestOptions) (*http.Re
 		return nil, nil, err
 	}
 
-	if err := cli.addHeadersToRequest(req, opt); err != nil {
+	if err := cli.attachRequestHeaders(req, opt); err != nil {
 		canFunc()
 		return nil, nil, err
-	}
-
-	if opt.Auth != nil {
-		req.SetBasicAuth(opt.Auth.Username, opt.Auth.Password)
 	}
 
 	return req, canFunc, nil
@@ -117,7 +114,29 @@ func (cli *Client) getRequestMethod(method string) (string, error) {
 	}
 }
 
-func (cli *Client) addHeadersToRequest(req *http.Request, opt RequestOptions) error {
+// attachRequestHeaders set the field values of the request headers by the request options or
+// client configurations. It'll overwrite `Content-Type`, `User-Agent`, and other fields in the
+// request headers by the config.
+func (cli *Client) attachRequestHeaders(req *http.Request, opt RequestOptions) error {
+	cli.setHeaders(req, opt)
+
+	if err := cli.setContentType(req, opt); err != nil {
+		return err
+	}
+
+	cli.setUserAgent(req, opt)
+
+	if opt.Auth != nil {
+		req.SetBasicAuth(opt.Auth.Username, opt.Auth.Password)
+	}
+
+	return nil
+}
+
+// setHeaders set the field values of the request headers from the request options or the client
+// configurations. The fields in the request options will overwrite the same fields in the client
+// configuration.
+func (cli *Client) setHeaders(req *http.Request, opt RequestOptions) {
 	if opt.Headers != nil {
 		for k, v := range opt.Headers {
 			for _, val := range v {
@@ -137,20 +156,6 @@ func (cli *Client) addHeadersToRequest(req *http.Request, opt RequestOptions) er
 			}
 		}
 	}
-
-	if err := cli.setContentType(req, opt); err != nil {
-		return err
-	}
-
-	userAgent := opt.UserAgent
-	if userAgent == "" && cli.UserAgent != "" {
-		userAgent = cli.UserAgent
-	}
-	if userAgent != "" {
-		req.Header.Set("User-Agent", userAgent)
-	}
-
-	return nil
 }
 
 // setContentType checks the "Content-Type" field in the request headers, and set it by the
@@ -171,6 +176,22 @@ func (cli *Client) setContentType(req *http.Request, opt RequestOptions) error {
 	req.Header.Set("Content-Type", contentType)
 
 	return nil
+}
+
+// setUserAgent checks the user agent value in the request options or the client configurations,
+// and set it as the value of the `User-Agent` field in the request headers.
+// Default "go-request/x.x".
+func (cli *Client) setUserAgent(req *http.Request, opt RequestOptions) {
+	userAgent := opt.UserAgent
+	if userAgent == "" && cli.UserAgent != "" {
+		userAgent = cli.UserAgent
+	}
+
+	if userAgent == "" {
+		userAgent = RequestDefaultUserAgent
+	}
+
+	req.Header.Set("User-Agent", userAgent)
 }
 
 func (cli *Client) parseURL(uri string, opt RequestOptions) (string, error) {

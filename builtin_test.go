@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
-	"regexp"
 	"testing"
 
 	"github.com/ghosind/go-assert"
@@ -150,9 +149,7 @@ func TestRequestWithUserAgent(t *testing.T) {
 	a.NilNow(err)
 
 	a.NotNilNow(data.UserAgent)
-	if !regexp.MustCompile(`^Go-http-client`).Match([]byte(*data.UserAgent)) {
-		a.Errorf("UserAgent in the request headers = \"%s\", want start with \"Go-http-client\"", *data.UserAgent)
-	}
+	a.DeepEqualNow(*data.UserAgent, "go-request/0.1")
 
 	cli := New(Config{
 		UserAgent: "Test-client",

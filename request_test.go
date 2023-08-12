@@ -10,6 +10,31 @@ import (
 	"github.com/ghosind/go-assert"
 )
 
+func TestSetHeaders(t *testing.T) {
+	a := assert.New(t)
+	cli := New(Config{
+		Headers: map[string][]string{
+			"Key1": {"V1"},
+			"Key2": {"V2"},
+		},
+	})
+
+	req, err := http.NewRequest("GET", "", nil)
+	if err != nil {
+		a.Fatalf("Unexpected error: %v", err)
+	}
+
+	cli.setHeaders(req, RequestOptions{
+		Headers: map[string][]string{
+			"Key2": {"V1"},
+			"Key3": {"V3"},
+		},
+	})
+	a.DeepEqual(req.Header.Get("Key1"), "V1")
+	a.DeepEqual(req.Header.Get("Key2"), "V1")
+	a.DeepEqual(req.Header.Get("Key3"), "V3")
+}
+
 func TestSetContentType(t *testing.T) {
 	a := assert.New(t)
 	cli := New()
@@ -43,6 +68,53 @@ func TestSetContentType(t *testing.T) {
 		ContentType: "unknown",
 	})
 	a.NotNilNow(err)
+}
+
+func TestSetUserAgent(t *testing.T) {
+	a := assert.New(t)
+	cli := New()
+
+	req, err := http.NewRequest("GET", "", nil)
+	if err != nil {
+		a.Fatalf("Unexpected error: %v", err)
+	}
+
+	cli.setUserAgent(req, RequestOptions{})
+	a.DeepEqual(req.Header.Get("User-Agent"), RequestDefaultUserAgent)
+	req.Header.Del("User-Agent")
+
+	cli.UserAgent = "Test-HTTP-Client"
+	cli.setUserAgent(req, RequestOptions{})
+	a.DeepEqual(req.Header.Get("User-Agent"), "Test-HTTP-Client")
+	req.Header.Del("User-Agent")
+
+	cli.setUserAgent(req, RequestOptions{UserAgent: "Test-Client"})
+	a.DeepEqual(req.Header.Get("User-Agent"), "Test-Client")
+	req.Header.Del("User-Agent")
+}
+
+func TestBasicAuth(t *testing.T) {
+	a := assert.New(t)
+	cli := New()
+
+	req, err := http.NewRequest("GET", "", nil)
+	if err != nil {
+		a.Fatalf("Unexpected error: %v", err)
+	}
+
+	err = cli.attachRequestHeaders(req, RequestOptions{})
+	a.NilNow(err)
+	a.DeepEqual(req.Header.Get("Authorization"), "")
+	req.Header.Del("Authorization")
+
+	err = cli.attachRequestHeaders(req, RequestOptions{
+		Auth: &AuthConfig{
+			Username: "user",
+			Password: "pass",
+		},
+	})
+	a.NilNow(err)
+	a.DeepEqual(req.Header.Get("Authorization"), "Basic dXNlcjpwYXNz")
 }
 
 func TestGetRequestMethod(t *testing.T) {
