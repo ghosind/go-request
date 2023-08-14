@@ -26,11 +26,14 @@ type RequestOptions struct {
 	UserAgent string
 	// Auth indicates that HTTP Basic auth should be used. It will set an `Authorization` header,
 	// and it'll also overwriting any existing `Authorization` field in the request header.
-	Auth *AuthConfig
+	Auth *BasicAuthConfig
 }
 
-type AuthConfig struct {
+// BasicAuthConfig indicates the config of the HTTP Basic Auth that is used for the request.
+type BasicAuthConfig struct {
+	// Username indicates the username used for HTTP Basic Auth
 	Username string
+	// Password indicates the password used for HTTP Basic Auth
 	Password string
 }
 

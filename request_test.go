@@ -118,7 +118,7 @@ func TestBasicAuth(t *testing.T) {
 	req.Header.Del("Authorization")
 
 	err = cli.attachRequestHeaders(req, RequestOptions{
-		Auth: &AuthConfig{
+		Auth: &BasicAuthConfig{
 			Username: "user",
 			Password: "pass",
 		},
