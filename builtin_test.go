@@ -149,7 +149,7 @@ func TestRequestWithUserAgent(t *testing.T) {
 	a.NilNow(err)
 
 	a.NotNilNow(data.UserAgent)
-	a.DeepEqualNow(*data.UserAgent, "go-request/0.1")
+	a.DeepEqualNow(*data.UserAgent, RequestDefaultUserAgent)
 
 	cli := New(Config{
 		UserAgent: "Test-client",
