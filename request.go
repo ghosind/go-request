@@ -11,13 +11,33 @@ import (
 )
 
 type RequestOptions struct {
-	BaseURL    string
-	Timeout    int
-	Context    context.Context
+	// BaseURL will prepended to the url of the request unless the url is absolute.
+	BaseURL string
+	// Timeout specifies the number of milliseconds before the request times out. This value will be
+	// ignored if the `Content` field in the request options is set. It indicates no time-out
+	// limitation if the value is -1.
+	Timeout int
+	// Context is a `context.Content` object that is used for manipulating the request by yourself.
+	// The `Timeout` field will be ignored if this value is not empty, and you need to control
+	// timeout by yourself.
+	Context context.Context
+	// Parameters are the URL parameters to be sent with the request.
 	Parameters map[string][]string
-	Headers    map[string][]string
-	Body       any
-	Method     string
+	// Headers are custom headers to be sent.
+	//
+	//	resp, err := request.Request("http://example.com", RequestOptions{
+	//	  Headers: map[string][]string{
+	//	    "Authorization": {"Bearer XXXXX"},
+	//	  },
+	//	})
+	Headers map[string][]string
+	// Body is the data to be sent as the request body. It'll be encoded with the content type
+	// specified by the `ContentType` field in the request options, or encoded as a JSON if the
+	// `ContentType` field is empty. It'll skip the encode processing if the value is a string or a
+	// slice of bytes.
+	Body any
+	// Method indicates the HTTP method of the request, default GET.
+	Method string
 	// ContentType indicates the type of data that will encode and send to the server. Available
 	// options are: "json", default "json".
 	ContentType string
@@ -26,6 +46,13 @@ type RequestOptions struct {
 	UserAgent string
 	// Auth indicates that HTTP Basic auth should be used. It will set an `Authorization` header,
 	// and it'll also overwriting any existing `Authorization` field in the request header.
+	//
+	//	resp, err := request.Request("https://example.com", RequestOptions{
+	//	  Auth: &request.BasicAuthConfig{
+	//	    Username: "user",
+	//	    Password: "pass",
+	//	  },
+	//	})
 	Auth *BasicAuthConfig
 }
 
@@ -37,8 +64,12 @@ type BasicAuthConfig struct {
 	Password string
 }
 
+// urlPattern is the regular expression pattern for checking whether an URL is starting with HTTP
+// or HTTPS protocol or not.
 var urlPattern *regexp.Regexp = regexp.MustCompile(`^https?://.+`)
 
+// request creates an HTTP request with the specific HTTP method, the request options, and the
+// client config, and send it to the specific destination by the URL.
 func (cli *Client) request(method, url string, opts ...RequestOptions) (*http.Response, error) {
 	var opt RequestOptions
 
@@ -68,6 +99,8 @@ func (cli *Client) request(method, url string, opts ...RequestOptions) (*http.Re
 	return httpClient.Do(req)
 }
 
+// makeRequest creates a new `http.Request` object with the specific HTTP method, request url, and
+// other configurations.
 func (cli *Client) makeRequest(method, url string, opt RequestOptions) (*http.Request, context.CancelFunc, error) {
 	method, err := cli.getRequestMethod(method)
 	if err != nil {

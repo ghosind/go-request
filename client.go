@@ -63,34 +63,56 @@ func New(config ...Config) *Client {
 	return cli
 }
 
+// Request performs an HTTP request to the specific URL with the request options and the client
+// config. If no request options are set, it will be sent as an HTTP GET request.
+//
+//	resp, err := cli.Request("https://example.com")
+//	if err != nil {
+//	  // Error handling
+//	}
+//	// Response handling
 func (cli *Client) Request(url string, opt ...RequestOptions) (*http.Response, error) {
 	return cli.request("", url, opt...)
 }
 
+// DELETE performs an HTTP DELETE request to the specific URL with the request options and the
+// client config.
 func (cli *Client) DELETE(url string, opt ...RequestOptions) (*http.Response, error) {
 	return cli.request(http.MethodDelete, url, opt...)
 }
 
+// GET performs an HTTP GET request to the specific URL with the request options and the client
+// config.
 func (cli *Client) GET(url string, opt ...RequestOptions) (*http.Response, error) {
 	return cli.request(http.MethodGet, url, opt...)
 }
 
+// HEAD performs an HTTP HEAD request to the specific URL with the request options and the client
+// config.
 func (cli *Client) HEAD(url string, opt ...RequestOptions) (*http.Response, error) {
 	return cli.request(http.MethodHead, url, opt...)
 }
 
+// OPTIONS performs an HTTP OPTIONS request to the specific URL with the request options and the
+// client config.
 func (cli *Client) OPTIONS(url string, opt ...RequestOptions) (*http.Response, error) {
 	return cli.request(http.MethodOptions, url, opt...)
 }
 
+// PATCH performs an HTTP PATCH request to the specific URL with the request options and the
+// client config.
 func (cli *Client) PATCH(url string, opt ...RequestOptions) (*http.Response, error) {
 	return cli.request(http.MethodPatch, url, opt...)
 }
 
+// POST performs an HTTP POST request to the specific URL with the request options and the client
+// config.
 func (cli *Client) POST(url string, opt ...RequestOptions) (*http.Response, error) {
 	return cli.request(http.MethodPost, url, opt...)
 }
 
+// PUT performs an HTTP PUT request to the specific URL with the request options and the client
+// config.
 func (cli *Client) PUT(url string, opt ...RequestOptions) (*http.Response, error) {
 	return cli.request(http.MethodPut, url, opt...)
 }

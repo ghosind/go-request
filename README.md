@@ -42,7 +42,7 @@ go get -u github.com/ghosind/go-request
 The is a minimal example of performing a `GET` request:
 
 ```go
-resp, err := request.Request("https://dummyjson.com/products/1")
+resp, err := request.Request("https://example.com/products/1")
 if err != nil {
   // handle error
 }
@@ -54,7 +54,7 @@ if err != nil {
 You can perform a `POST` request with a request config that set the `Method` field's value to `POST`.
 
 ```go
-resp, err := request.Request("https://dummyjson.com/products/add", RequestConfig{
+resp, err := request.Request("https://example.com/products", RequestConfig{
   Method: "POST",
   Body:   map[string]any{
     "title": "Apple",
@@ -68,7 +68,7 @@ If the `ContentType` field in the request config is empty, the body data will se
 You can also use `POST` method to perform a `POST` request with the specific body data.
 
 ```go
-resp, err := request.POST("https://dummyjson.com/products/add", RequestConfig{
+resp, err := request.POST("https://example.com/products", RequestConfig{
   Body: map[string]any{
     "title": "Apple",
   },
@@ -108,7 +108,7 @@ You can also set `Timeout` to `request.RequestTimeoutNone` to disable the timeou
 We provided `ToObject` and `ToString` methods to handle response body. For example, the `ToString` method will read all data in the response body, and return it that represented in a string value.
 
 ```go
-content, resp, err := ToString(request.Request("https://dummyjson.com/products/1"))
+content, resp, err := ToString(request.Request("https://example.com/products/1"))
 if err != nil {
   // handle error
 }
@@ -124,7 +124,7 @@ type Product struct {
   Title string `json:"title"`
 }
 
-product, resp, err := ToObject[Product](request.Request("https://dummyjson.com/products/1"))
+product, resp, err := ToObject[Product](request.Request("https://example.com/products/1"))
 if err != nil {
   // handle error
 }
@@ -140,7 +140,7 @@ You can create a new client instance with a custom config.
 
 ```go
 cli := request.New(request.Config{
-  BaseURL: "https://dummyjson.com/",
+  BaseURL: "https://example.com/",
 })
 
 resp, err := cli.GET("/products/1")
@@ -154,6 +154,7 @@ resp, err := cli.GET("/products/1")
 | `BaseURL` | `string` | The base url for all requests that performing by this client instance. |
 | `Headers` | `map[string][]string` | Custom headers to be sent. |
 | `Timeout` | `int` | Timeout in milliseconds. |
+| `UserAgent` | `string` | Custom user agent value. |
 
 ## Request Config
 
@@ -168,9 +169,6 @@ There are the available config options for performing a request, and all fields 
 | `Context` | `context.Context` | Self-control context. |
 | `Body` | `any` | The request body. |
 | `Method` | `string` | HTTP request method, default `GET`. |
-| `ContentType` | `string` | The content type of this request, default `application/json` if it's empty. |
-
-## Roadmap
-
-- Request and response intercepts.
-- URL encoded form serialization/deserialization.
+| `ContentType` | `string` | The content type of this request. Available options are: `"json"`, and default `"json"`. |
+| `UserAgent` | `string` | Custom user agent value. |
+| `Auth` | `*BasicAuthConfig` | HTTP Basic Auth config. |

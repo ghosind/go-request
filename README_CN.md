@@ -41,7 +41,7 @@ go get -u github.com/ghosind/go-request
 下面是一个简单的例子，用于发出一个`GET`请求：
 
 ```go
-resp, err := request.Request("https://dummyjson.com/products/1")
+resp, err := request.Request("https://example.com/products/1")
 if err != nil {
   // 错误处理
 }
@@ -53,7 +53,7 @@ if err != nil {
 可以在发出请求时传入请求配置，并设置`Method`属性的值为`"POST"`，以执行发出一个`POST`请求：
 
 ```go
-resp, err := request.Request("https://dummyjson.com/products/add", RequestConfig{
+resp, err := request.Request("https://example.com/products", RequestConfig{
   Method: "POST",
   Body:   map[string]any{
     "title": "Apple",
@@ -67,7 +67,7 @@ resp, err := request.Request("https://dummyjson.com/products/add", RequestConfig
 除了设置`Method`属性外，还可以直接使用内置的`POST`方法执行`POST`请求，其等同于调用`Request`方法并设置相应的配置：
 
 ```go
-resp, err := request.POST("https://dummyjson.com/products/add", RequestConfig{
+resp, err := request.POST("https://example.com/products", RequestConfig{
   Body: map[string]any{
     "title": "Apple",
   },
@@ -107,7 +107,7 @@ resp, err := request.Request("https://example.com", request.RequestConfig{
 对于响应的内容，提供了`ToObject`及`ToString`方法用于简便处理。例如可以使用`ToString`方法读取响应内容，并以字符串的形式返回。
 
 ```go
-content, resp, err := ToString(request.Request("https://dummyjson.com/products/1"))
+content, resp, err := ToString(request.Request("https://example.com/products/1"))
 if err != nil {
   // 错误处理
 }
@@ -123,7 +123,7 @@ type Product struct {
   Title string `json:"title"`
 }
 
-product, resp, err := ToObject[Product](request.Request("https://dummyjson.com/products/1"))
+product, resp, err := ToObject[Product](request.Request("https://example.com/products/1"))
 if err != nil {
   // 错误处理
 }
@@ -135,11 +135,11 @@ if err != nil {
 
 ## 请求客户端实例
 
-对于需要使用一些公用配置（例如相同的请求目标网站、相同的头部值等），可以创建一个请求客户端实例，并传入自定义的配置。例如下面的例子中，将创建一个请求客户端实例并将其基础URL设置为`"https://dummyjson.com/"`，随后使用该客户端实例进行请求操作时，都将默认使用该基础URL。
+对于需要使用一些公用配置（例如相同的请求目标网站、相同的头部值等），可以创建一个请求客户端实例，并传入自定义的配置。例如下面的例子中，将创建一个请求客户端实例并将其基础URL设置为`"https://example.com/"`，随后使用该客户端实例进行请求操作时，都将默认使用该基础URL。
 
 ```go
 cli := request.New(request.Config{
-  BaseURL: "https://dummyjson.com/",
+  BaseURL: "https://example.com/",
 })
 
 resp, err := cli.GET("/products/1")
@@ -153,6 +153,7 @@ resp, err := cli.GET("/products/1")
 | `BaseURL` | `string` | 基础URL，在请求时将会对其与请求的`url`参数进行拼接，成为最终请求的目标地址。 |
 | `Headers` | `map[string][]string` | 自定义头部 |
 | `Timeout` | `int` | 以毫秒为单位的超时时长设定 |
+| `UserAgent` | `string` | 自定义UserAgent |
 
 ## 请求配置
 
@@ -167,4 +168,6 @@ resp, err := cli.GET("/products/1")
 | `Context` | `context.Context` | 用于请求的上下文 |
 | `Body` | `any` | 请求内容 |
 | `Method` | `string` | 请求方式，默认为`GET` |
-| `ContentType` | `string` | 请求内容类型，默认为`application/json` |
+| `ContentType` | `string` | 请求内容类型，当前可用值包括：`"json"`，默认为`"json"` |
+| `UserAgent` | `string` | 自定义UserAgent |
+| `Auth` | `*BasicAuthConfig` | HTTP Basic Auth设置 |
