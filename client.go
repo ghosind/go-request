@@ -37,7 +37,9 @@ const (
 	// RequestTimeoutNoLimit means no timeout limitation.
 	RequestTimeoutNoLimit int = -1
 
-	RequestDefaultUserAgent string = "go-request/0.1"
+	// RequestDefaultUserAgent is the default user agent for all requests that are sent by this
+	// package.
+	RequestDefaultUserAgent string = "go-request/0.2"
 )
 
 // New creates and returns a new Client instance.
