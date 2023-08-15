@@ -36,15 +36,15 @@ func TestRequestWithoutOptions(t *testing.T) {
 	data, _, err := ToString(Request("http://localhost:8080/test"))
 	a.NilNow(err)
 
-	a.NotDeepEqualNow(len(data), 0)
+	a.NotEqualNow(len(data), 0)
 
 	payload := new(testResponse)
 	a.NilNow(json.Unmarshal([]byte(data), &payload))
 
 	a.NotNilNow(payload.Method)
 	a.NotNilNow(payload.Path)
-	a.DeepEqualNow(*payload.Method, "GET")
-	a.DeepEqualNow(*payload.Path, "/test")
+	a.EqualNow(*payload.Method, "GET")
+	a.EqualNow(*payload.Path, "/test")
 }
 
 func TestRequestWithOptions(t *testing.T) {
@@ -56,7 +56,7 @@ func TestRequestWithOptions(t *testing.T) {
 	a.NilNow(err)
 
 	a.NotNilNow(data.Method)
-	a.DeepEqualNow(*data.Method, "GET")
+	a.EqualNow(*data.Method, "GET")
 }
 
 func TestRequestMethods(t *testing.T) {
@@ -80,7 +80,7 @@ func TestRequestMethods(t *testing.T) {
 		}
 
 		a.NotNilNow(data.Method)
-		a.DeepEqualNow(*data.Method, method)
+		a.EqualNow(*data.Method, method)
 	}
 }
 
@@ -97,9 +97,9 @@ func TestRequestWithBody(t *testing.T) {
 	a.NotNilNow(data.Method)
 	a.NotNilNow(data.ContentType)
 	a.NotNilNow(data.Body)
-	a.DeepEqualNow(*data.Method, "POST")
-	a.DeepEqualNow(*data.ContentType, "application/json")
-	a.DeepEqualNow(*data.Body, `{"data":"Hello world!"}`)
+	a.EqualNow(*data.Method, "POST")
+	a.EqualNow(*data.ContentType, "application/json")
+	a.EqualNow(*data.Body, `{"data":"Hello world!"}`)
 }
 
 func TestRequestWithParameters(t *testing.T) {
@@ -114,7 +114,7 @@ func TestRequestWithParameters(t *testing.T) {
 	a.NilNow(err)
 
 	a.NotNilNow(data.Query)
-	a.DeepEqualNow(*data.Query, "q=test&v=1")
+	a.EqualNow(*data.Query, "q=test&v=1")
 }
 
 func TestRequestWithHeader(t *testing.T) {
@@ -128,7 +128,7 @@ func TestRequestWithHeader(t *testing.T) {
 	a.NilNow(err)
 
 	a.NotNilNow(data.Token)
-	a.DeepEqualNow(*data.Token, "test-token")
+	a.EqualNow(*data.Token, "test-token")
 
 	cli := New(Config{
 		Headers: map[string][]string{
@@ -139,7 +139,7 @@ func TestRequestWithHeader(t *testing.T) {
 	a.NilNow(err)
 
 	a.NotNilNow(data.Token)
-	a.DeepEqualNow(*data.Token, "test-token")
+	a.EqualNow(*data.Token, "test-token")
 }
 
 func TestRequestWithUserAgent(t *testing.T) {
@@ -149,7 +149,7 @@ func TestRequestWithUserAgent(t *testing.T) {
 	a.NilNow(err)
 
 	a.NotNilNow(data.UserAgent)
-	a.DeepEqualNow(*data.UserAgent, RequestDefaultUserAgent)
+	a.EqualNow(*data.UserAgent, RequestDefaultUserAgent)
 
 	cli := New(Config{
 		UserAgent: "Test-client",
@@ -158,7 +158,7 @@ func TestRequestWithUserAgent(t *testing.T) {
 	a.NilNow(err)
 
 	a.NotNilNow(data.UserAgent)
-	a.DeepEqualNow(*data.UserAgent, "Test-client")
+	a.EqualNow(*data.UserAgent, "Test-client")
 
 	data, _, err = ToObject[testResponse](cli.GET("http://localhost:8080", RequestOptions{
 		UserAgent: "Another-test-client",
@@ -166,7 +166,7 @@ func TestRequestWithUserAgent(t *testing.T) {
 	a.NilNow(err)
 
 	a.NotNilNow(data.UserAgent)
-	a.DeepEqualNow(*data.UserAgent, "Another-test-client")
+	a.EqualNow(*data.UserAgent, "Another-test-client")
 }
 
 func TestRequestWithInvalidConfig(t *testing.T) {

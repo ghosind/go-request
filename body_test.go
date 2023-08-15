@@ -51,5 +51,5 @@ func TestEncodeRequestBody(t *testing.T) {
 func testEncodeRequestBody(a *assert.Assertion, cli *Client, data any, expect []byte) {
 	out, err := cli.encodeRequestBody(data, "")
 	a.NilNow(err)
-	a.DeepEqual(out, expect)
+	a.Equal(out, expect)
 }

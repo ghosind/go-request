@@ -38,7 +38,7 @@ func TestToObject(t *testing.T) {
 	}, nil)
 	a.NilNow(err)
 	a.NotNilNow(data.Method)
-	a.DeepEqualNow(*data.Method, "GET")
+	a.EqualNow(*data.Method, "GET")
 }
 
 func TestToString(t *testing.T) {
@@ -57,5 +57,5 @@ func TestToString(t *testing.T) {
 		Body: io.NopCloser(bytes.NewReader([]byte("Hello world!"))),
 	}, nil)
 	a.NilNow(err)
-	a.DeepEqualNow(data, "Hello world!")
+	a.EqualNow(data, "Hello world!")
 }
