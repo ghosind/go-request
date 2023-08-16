@@ -3,6 +3,7 @@ package request
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"os"
 	"testing"
 
@@ -176,4 +177,36 @@ func TestRequestWithInvalidConfig(t *testing.T) {
 		Method: "UNKNOWN",
 	})
 	a.NotNilNow(err)
+}
+
+func TestRequestWithMaxRedirects(t *testing.T) {
+	a := assert.New(t)
+
+	resp, err := Request("http://localhost:8080/redirect", RequestOptions{
+		MaxRedirects: 3,
+	})
+	a.NilNow(err)
+
+	locationUrl := resp.Header.Get("Location")
+	location, err := url.Parse(locationUrl)
+	a.NilNow(err)
+
+	tried := location.Query().Get("tried")
+	a.EqualNow(tried, "3")
+}
+
+func TestRequestWithNoRedirects(t *testing.T) {
+	a := assert.New(t)
+
+	resp, err := Request("http://localhost:8080/redirect", RequestOptions{
+		MaxRedirects: RequestNoRedirects,
+	})
+	a.NilNow(err)
+
+	locationUrl := resp.Header.Get("Location")
+	location, err := url.Parse(locationUrl)
+	a.NilNow(err)
+
+	tried := location.Query().Get("tried")
+	a.EqualNow(tried, "1")
 }

@@ -54,6 +54,8 @@ type RequestOptions struct {
 	//	  },
 	//	})
 	Auth *BasicAuthConfig
+	// MaxRedirects defines the maximum number of redirects, default 5.
+	MaxRedirects int
 }
 
 // BasicAuthConfig indicates the config of the HTTP Basic Auth that is used for the request.
@@ -91,7 +93,7 @@ func (cli *Client) request(method, url string, opts ...RequestOptions) (*http.Re
 		defer canFunc()
 	}
 
-	httpClient := cli.getHTTPClient()
+	httpClient := cli.getHTTPClient(opt)
 	defer func() {
 		cli.clientPool.Put(httpClient)
 	}()

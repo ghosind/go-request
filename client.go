@@ -37,6 +37,11 @@ const (
 	// RequestTimeoutNoLimit means no timeout limitation.
 	RequestTimeoutNoLimit int = -1
 
+	// RequestMaxRedirects is the default maximum number of redirects.
+	RequestDefaultMaxRedirects int = 5
+	// RequestNoRedirect means it'll never redirect automatically.
+	RequestNoRedirects int = -1
+
 	// RequestDefaultUserAgent is the default user agent for all requests that are sent by this
 	// package.
 	RequestDefaultUserAgent string = "go-request/0.2"
@@ -129,7 +134,31 @@ func (cli *Client) initClientHeaders(headers map[string][]string) {
 	}
 }
 
-// getHTTPClient returns a http.Client from the pool.
-func (cli *Client) getHTTPClient() *http.Client {
-	return cli.clientPool.Get().(*http.Client)
+// getHTTPClient gets an `http.Client` from the pool, and resets it to default state.
+func (cli *Client) getHTTPClient(opt RequestOptions) *http.Client {
+	httpClient := cli.clientPool.Get().(*http.Client)
+
+	maxRedirects := opt.MaxRedirects
+	if maxRedirects < RequestNoRedirects || maxRedirects == 0 {
+		maxRedirects = RequestDefaultMaxRedirects
+	}
+
+	httpClient.CheckRedirect = cli.getCheckRedirect(maxRedirects)
+
+	return httpClient
+}
+
+// getCheckRedirect returns a new check redirects handler for `http.Client`. This function will
+// never return errors except `http.ErrUseLastResponse` error that the redirects number is greater
+// than the maximum limitation.
+func (cli *Client) getCheckRedirect(
+	maxRedirects int,
+) func(req *http.Request, via []*http.Request) error {
+	return func(req *http.Request, via []*http.Request) error {
+		if len(via) >= maxRedirects {
+			return http.ErrUseLastResponse
+		}
+
+		return nil
+	}
 }

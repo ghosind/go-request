@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 type MockServer struct {
@@ -33,6 +34,22 @@ func (server *MockServer) Shutdown() {
 }
 
 func (server *MockServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	switch req.URL.Path {
+	case "/redirect":
+		server.redirectHandler(rw, req)
+	default:
+		server.defaultHandler(rw, req)
+	}
+}
+
+func (server *MockServer) redirectHandler(rw http.ResponseWriter, req *http.Request) {
+	tried := getIntParameter(req, "tried", 0)
+
+	rw.Header().Set("Location", fmt.Sprintf("http://127.0.0.1:8080/redirect?tried=%d", tried+1))
+	rw.WriteHeader(http.StatusFound)
+}
+
+func (server *MockServer) defaultHandler(rw http.ResponseWriter, req *http.Request) {
 	payload, err := io.ReadAll(req.Body)
 	if err != nil {
 		panic(fmt.Sprintf("unexpected error: %v", err))
@@ -59,4 +76,19 @@ func (server *MockServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if _, err := rw.Write(data); err != nil {
 		panic(fmt.Sprintf("unexpected error: %v", err))
 	}
+}
+
+func getIntParameter(req *http.Request, key string, defaultValue int64) int64 {
+	queries := req.URL.Query()
+	if !queries.Has(key) {
+		return defaultValue
+	}
+
+	value := queries.Get(key)
+	intValue, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		return defaultValue
+	}
+
+	return intValue
 }
