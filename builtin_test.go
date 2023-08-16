@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/ghosind/go-assert"
@@ -193,6 +194,20 @@ func TestRequestWithMaxRedirects(t *testing.T) {
 
 	tried := location.Query().Get("tried")
 	a.EqualNow(tried, "3")
+}
+
+func TestRequestWithDefaultMaxRedirects(t *testing.T) {
+	a := assert.New(t)
+
+	resp, err := Request("http://localhost:8080/redirect")
+	a.NilNow(err)
+
+	locationUrl := resp.Header.Get("Location")
+	location, err := url.Parse(locationUrl)
+	a.NilNow(err)
+
+	tried := location.Query().Get("tried")
+	a.EqualNow(tried, strconv.FormatInt(int64(RequestDefaultMaxRedirects), 10))
 }
 
 func TestRequestWithNoRedirects(t *testing.T) {

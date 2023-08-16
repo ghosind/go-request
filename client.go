@@ -154,6 +154,10 @@ func (cli *Client) getHTTPClient(opt RequestOptions) *http.Client {
 func (cli *Client) getCheckRedirect(
 	maxRedirects int,
 ) func(req *http.Request, via []*http.Request) error {
+	if maxRedirects == RequestDefaultMaxRedirects {
+		return cli.defaultCheckRedirect
+	}
+
 	return func(req *http.Request, via []*http.Request) error {
 		if len(via) >= maxRedirects {
 			return http.ErrUseLastResponse
@@ -161,4 +165,16 @@ func (cli *Client) getCheckRedirect(
 
 		return nil
 	}
+}
+
+// defaultCheckRedirect is the default redirect check handler, and it returns
+// `http.ErrUseLastResponse` if the number of redirects is greater than or equal to the default
+// number of maximum redirects. It returns `http.ErrUseLastResponse` to terminate the redirection
+// but does not return an error.
+func (cli *Client) defaultCheckRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= RequestDefaultMaxRedirects {
+		return http.ErrUseLastResponse
+	}
+
+	return nil
 }
