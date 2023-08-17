@@ -2,6 +2,7 @@ package request
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"path"
@@ -56,6 +57,17 @@ type RequestOptions struct {
 	Auth *BasicAuthConfig
 	// MaxRedirects defines the maximum number of redirects, default 5.
 	MaxRedirects int
+	// ValidateStatus defines whether the status code of the response is valid or not, and it'll
+	// return an error if fails to validate the status code. Default, it sets the result to fail if
+	// the status code is less than 200, or greater than and equal to 300.
+	//
+	//	resp, err := request.Request("http://example.com", request.RequestOptions{
+	//	  ValidateStatus: func (status int) bool {
+	//	    // Only success if the status code of response is 2XX
+	//	    return status >= http.StatusOk && status <= http.StatusMultipleChoices
+	//	  },
+	//	})
+	ValidateStatus func(int) bool
 }
 
 // BasicAuthConfig indicates the config of the HTTP Basic Auth that is used for the request.
@@ -98,7 +110,36 @@ func (cli *Client) request(method, url string, opts ...RequestOptions) (*http.Re
 		cli.clientPool.Put(httpClient)
 	}()
 
-	return httpClient.Do(req)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return resp, err
+	}
+
+	return cli.validateResponse(resp, opt)
+}
+
+// validateResponse validates the status code of the response, and returns fail if the result of
+// the validation is false.
+func (cli *Client) validateResponse(
+	resp *http.Response,
+	opt RequestOptions,
+) (*http.Response, error) {
+	var validateStatus func(int) bool
+	if opt.ValidateStatus != nil {
+		validateStatus = opt.ValidateStatus
+	} else if cli.ValidateStatus != nil {
+		validateStatus = cli.ValidateStatus
+	} else {
+		validateStatus = cli.defaultValidateStatus
+	}
+
+	status := resp.StatusCode
+	ok := validateStatus(status)
+	if !ok {
+		return resp, fmt.Errorf("request failed with status code %d", status)
+	}
+
+	return resp, nil
 }
 
 // makeRequest creates a new `http.Request` object with the specific HTTP method, request url, and

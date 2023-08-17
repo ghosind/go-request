@@ -37,6 +37,8 @@ func (server *MockServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	switch req.URL.Path {
 	case "/redirect":
 		server.redirectHandler(rw, req)
+	case "/status":
+		server.statusHandler(rw, req)
 	default:
 		server.defaultHandler(rw, req)
 	}
@@ -47,6 +49,12 @@ func (server *MockServer) redirectHandler(rw http.ResponseWriter, req *http.Requ
 
 	rw.Header().Set("Location", fmt.Sprintf("http://127.0.0.1:8080/redirect?tried=%d", tried+1))
 	rw.WriteHeader(http.StatusFound)
+}
+
+func (server *MockServer) statusHandler(rw http.ResponseWriter, req *http.Request) {
+	status := getIntParameter(req, "status", 200)
+
+	rw.WriteHeader(int(status))
 }
 
 func (server *MockServer) defaultHandler(rw http.ResponseWriter, req *http.Request) {

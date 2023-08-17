@@ -14,6 +14,9 @@ type Client struct {
 	UserAgent string
 	// MaxRedirects defines the maximum number of redirects for this client, default 5.
 	MaxRedirects int
+	// ValidateStatus defines whether the status code of the response is valid or not, and it'll
+	// return an error if fails to validate the status code.
+	ValidateStatus func(int) bool
 
 	// clientPool is for save http.Client instances.
 	clientPool sync.Pool
@@ -33,6 +36,17 @@ type Config struct {
 	UserAgent string
 	// MaxRedirects defines the maximum number of redirects for this client, default 5.
 	MaxRedirects int
+	// ValidateStatus defines whether the status code of the response is valid or not, and it'll
+	// return an error if fails to validate the status code. Default, it sets the result to fail if
+	// the status code is less than 200, or greater than and equal to 300.
+	//
+	//	cli := request.New(request.Config{
+	//	  ValidateStatus: func (status int) bool {
+	//	    // Only success if the status code of response is 2XX
+	//	    return status >= http.StatusOk && status <= http.StatusMultipleChoices
+	//	  },
+	//	})
+	ValidateStatus func(int) bool
 }
 
 const (
@@ -69,6 +83,7 @@ func New(config ...Config) *Client {
 		cli.timeout = cfg.Timeout
 		cli.UserAgent = cfg.UserAgent
 		cli.MaxRedirects = cfg.MaxRedirects
+		cli.ValidateStatus = cfg.ValidateStatus
 		cli.initClientHeaders(cfg.Headers)
 	}
 
@@ -185,4 +200,10 @@ func (cli *Client) defaultCheckRedirect(req *http.Request, via []*http.Request) 
 	}
 
 	return nil
+}
+
+// defaultValidateStatus is the default handler to check the status code of the responses. It only
+// returns true if the status code is greater than or equal to 200, and less than 300.
+func (cli *Client) defaultValidateStatus(status int) bool {
+	return status >= http.StatusOK && status < http.StatusMultipleChoices
 }

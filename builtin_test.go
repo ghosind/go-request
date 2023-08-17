@@ -243,3 +243,51 @@ func TestRequestWithNoRedirects(t *testing.T) {
 	tried := location.Query().Get("tried")
 	a.EqualNow(tried, "1")
 }
+
+func TestRequestWithDefaultValidateStatus(t *testing.T) {
+	a := assert.New(t)
+
+	resp, err := Request("http://localhost:8080/status", RequestOptions{
+		Parameters: map[string][]string{
+			"status": {"400"},
+		},
+	})
+	a.NotNilNow(err)
+	a.NotNilNow(resp)
+	a.Equal(resp.StatusCode, 400)
+}
+
+func TestRequestWithCustomValidateStatus(t *testing.T) {
+	a := assert.New(t)
+
+	resp, err := Request("http://localhost:8080/status", RequestOptions{
+		Parameters: map[string][]string{
+			"status": {"400"},
+		},
+		ValidateStatus: func(status int) bool {
+			return status == 400
+		},
+	})
+	a.NilNow(err)
+	a.NotNilNow(resp)
+	a.Equal(resp.StatusCode, 400)
+}
+
+func TestRequestWithClientValidateStatus(t *testing.T) {
+	a := assert.New(t)
+
+	cli := New(Config{
+		ValidateStatus: func(status int) bool {
+			return status == 400
+		},
+	})
+
+	resp, err := cli.Request("http://localhost:8080/status", RequestOptions{
+		Parameters: map[string][]string{
+			"status": {"400"},
+		},
+	})
+	a.NilNow(err)
+	a.NotNilNow(resp)
+	a.Equal(resp.StatusCode, 400)
+}
