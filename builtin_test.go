@@ -210,6 +210,24 @@ func TestRequestWithDefaultMaxRedirects(t *testing.T) {
 	a.EqualNow(tried, strconv.FormatInt(int64(RequestDefaultMaxRedirects), 10))
 }
 
+func TestRequestWithClientMaxRedirects(t *testing.T) {
+	a := assert.New(t)
+
+	cli := New(Config{
+		MaxRedirects: 3,
+	})
+
+	resp, err := cli.Request("http://localhost:8080/redirect")
+	a.NilNow(err)
+
+	locationUrl := resp.Header.Get("Location")
+	location, err := url.Parse(locationUrl)
+	a.NilNow(err)
+
+	tried := location.Query().Get("tried")
+	a.EqualNow(tried, "3")
+}
+
 func TestRequestWithNoRedirects(t *testing.T) {
 	a := assert.New(t)
 

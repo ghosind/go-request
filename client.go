@@ -12,6 +12,8 @@ type Client struct {
 	Headers map[string][]string
 	// UserAgent sets the client's User-Agent field in the request header.
 	UserAgent string
+	// MaxRedirects defines the maximum number of redirects for this client, default 5.
+	MaxRedirects int
 
 	// clientPool is for save http.Client instances.
 	clientPool sync.Pool
@@ -29,6 +31,8 @@ type Config struct {
 	Headers map[string][]string
 	// UserAgent sets the client's User-Agent field in the request header.
 	UserAgent string
+	// MaxRedirects defines the maximum number of redirects for this client, default 5.
+	MaxRedirects int
 }
 
 const (
@@ -64,6 +68,7 @@ func New(config ...Config) *Client {
 		cli.BaseURL = cfg.BaseURL
 		cli.timeout = cfg.Timeout
 		cli.UserAgent = cfg.UserAgent
+		cli.MaxRedirects = cfg.MaxRedirects
 		cli.initClientHeaders(cfg.Headers)
 	}
 
@@ -139,6 +144,9 @@ func (cli *Client) getHTTPClient(opt RequestOptions) *http.Client {
 	httpClient := cli.clientPool.Get().(*http.Client)
 
 	maxRedirects := opt.MaxRedirects
+	if maxRedirects == 0 {
+		maxRedirects = cli.MaxRedirects
+	}
 	if maxRedirects < RequestNoRedirects || maxRedirects == 0 {
 		maxRedirects = RequestDefaultMaxRedirects
 	}
