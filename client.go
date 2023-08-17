@@ -38,7 +38,7 @@ type Config struct {
 	MaxRedirects int
 	// ValidateStatus defines whether the status code of the response is valid or not, and it'll
 	// return an error if fails to validate the status code. Default, it sets the result to fail if
-	// the status code is less than 200, or greater than and equal to 300.
+	// the status code is less than 200, or greater than and equal to 400.
 	//
 	//	cli := request.New(request.Config{
 	//	  ValidateStatus: func (status int) bool {
@@ -203,7 +203,7 @@ func (cli *Client) defaultCheckRedirect(req *http.Request, via []*http.Request) 
 }
 
 // defaultValidateStatus is the default handler to check the status code of the responses. It only
-// returns true if the status code is greater than or equal to 200, and less than 300.
+// returns true if the status code is greater than or equal to 200, and less than 400.
 func (cli *Client) defaultValidateStatus(status int) bool {
-	return status >= http.StatusOK && status < http.StatusMultipleChoices
+	return status >= http.StatusOK && status < http.StatusBadRequest
 }

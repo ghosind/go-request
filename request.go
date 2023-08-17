@@ -59,7 +59,7 @@ type RequestOptions struct {
 	MaxRedirects int
 	// ValidateStatus defines whether the status code of the response is valid or not, and it'll
 	// return an error if fails to validate the status code. Default, it sets the result to fail if
-	// the status code is less than 200, or greater than and equal to 300.
+	// the status code is less than 200, or greater than and equal to 400.
 	//
 	//	resp, err := request.Request("http://example.com", request.RequestOptions{
 	//	  ValidateStatus: func (status int) bool {
