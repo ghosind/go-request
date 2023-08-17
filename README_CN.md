@@ -154,6 +154,8 @@ resp, err := cli.GET("/products/1")
 | `Headers` | `map[string][]string` | 自定义头部 |
 | `Timeout` | `int` | 以毫秒为单位的超时时长设定 |
 | `UserAgent` | `string` | 自定义UserAgent |
+| `MaxRedirects` | `int` | 最大跳转次数 |
+| `ValidateStatus` | `func(int) bool` | 响应有效性判断方法 |
 
 ## 请求配置
 
@@ -171,3 +173,5 @@ resp, err := cli.GET("/products/1")
 | `ContentType` | `string` | 请求内容类型，当前可用值包括：`"json"`，默认为`"json"` |
 | `UserAgent` | `string` | 自定义UserAgent |
 | `Auth` | `*BasicAuthConfig` | HTTP Basic Auth设置 |
+| `MaxRedirects` | `int` | 最大跳转次数 |
+| `ValidateStatus` | `func(int) bool` | 响应有效性判断方法 |

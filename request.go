@@ -11,8 +11,14 @@ import (
 	"time"
 )
 
+// RequestOptions is the config for a request.
 type RequestOptions struct {
 	// BaseURL will prepended to the url of the request unless the url is absolute.
+	//
+	//	resp, err := request.Request("/test", request.RequestOptions{
+	//	  BaseURL: "http://example.com",
+	//	})
+	//	// http://example.com/test
 	BaseURL string
 	// Timeout specifies the number of milliseconds before the request times out. This value will be
 	// ignored if the `Content` field in the request options is set. It indicates no time-out
@@ -23,10 +29,17 @@ type RequestOptions struct {
 	// timeout by yourself.
 	Context context.Context
 	// Parameters are the URL parameters to be sent with the request.
+	//
+	//	resp, err := request.Request("http://example.com", request.RequestOptions{
+	//	  Parameters: map[string][]string{
+	//	    "name": {"John"},
+	//	  },
+	//	})
+	//	// http://example.com?name=John
 	Parameters map[string][]string
 	// Headers are custom headers to be sent.
 	//
-	//	resp, err := request.Request("http://example.com", RequestOptions{
+	//	resp, err := request.Request("http://example.com", request.RequestOptions{
 	//	  Headers: map[string][]string{
 	//	    "Authorization": {"Bearer XXXXX"},
 	//	  },
@@ -36,6 +49,19 @@ type RequestOptions struct {
 	// specified by the `ContentType` field in the request options, or encoded as a JSON if the
 	// `ContentType` field is empty. It'll skip the encode processing if the value is a string or a
 	// slice of bytes.
+	//
+	//	resp, err := request.Request("http://example.com", request.RequestOptions{
+	//	  Method: http.MethodPost,
+	//	  Body: "Hello world!", // with raw string
+	//	})
+	//
+	//	resp, err := request.Request("http://example.com", request.RequestOptions{
+	//	  Method: http.MethodPost,
+	//	  // with struct/map, and it'll encoding by the value of ContentType field.
+	//	  Body: map[string]any{
+	//	    "data": "Hello world",
+	//	  },
+	//	})
 	Body any
 	// Method indicates the HTTP method of the request, default GET.
 	Method string
@@ -48,7 +74,7 @@ type RequestOptions struct {
 	// Auth indicates that HTTP Basic auth should be used. It will set an `Authorization` header,
 	// and it'll also overwriting any existing `Authorization` field in the request header.
 	//
-	//	resp, err := request.Request("https://example.com", RequestOptions{
+	//	resp, err := request.Request("https://example.com", request.RequestOptions{
 	//	  Auth: &request.BasicAuthConfig{
 	//	    Username: "user",
 	//	    Password: "pass",

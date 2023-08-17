@@ -5,6 +5,7 @@ import (
 	"sync"
 )
 
+// Client is the HTTP requesting client.
 type Client struct {
 	// BaseURL will be prepended to all request URL unless URL is absolute.
 	BaseURL string
@@ -24,6 +25,7 @@ type Client struct {
 	timeout int
 }
 
+// Config is the config for the HTTP requesting client.
 type Config struct {
 	// BaseURL will be prepended to all request URL unless URL is absolute.
 	BaseURL string
@@ -66,6 +68,12 @@ const (
 )
 
 // New creates and returns a new Client instance.
+//
+//	cli := request.New(request.Config{
+//	  BaseURL: "https://www.example.com", // the base URL for every request sent by this client
+//	  Timeout: 5000, // the default timeout for this client
+//	  // ...
+//	})
 func New(config ...Config) *Client {
 	cli := new(Client)
 

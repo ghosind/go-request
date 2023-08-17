@@ -155,6 +155,8 @@ resp, err := cli.GET("/products/1")
 | `Headers` | `map[string][]string` | Custom headers to be sent. |
 | `Timeout` | `int` | Timeout in milliseconds. |
 | `UserAgent` | `string` | Custom user agent value. |
+| `MaxRedirects` | `int` | The maximum number of redirects for this client, default 5. |
+| `ValidateStatus` | `func(int) bool` | The function checks whether the status code of the response is valid or not. |
 
 ## Request Config
 
@@ -172,3 +174,5 @@ There are the available config options for performing a request, and all fields 
 | `ContentType` | `string` | The content type of this request. Available options are: `"json"`, and default `"json"`. |
 | `UserAgent` | `string` | Custom user agent value. |
 | `Auth` | `*BasicAuthConfig` | HTTP Basic Auth config. |
+| `MaxRedirects` | `int` | The maximum number of redirects for the request, default 5. |
+| `ValidateStatus` | `func(int) bool` | The function checks whether the status code of the response is valid or not. |
