@@ -1,8 +1,12 @@
 package request
 
 import (
+	"bytes"
+	"compress/flate"
+	"compress/gzip"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -141,7 +145,43 @@ func (cli *Client) request(method, url string, opts ...RequestOptions) (*http.Re
 		return resp, err
 	}
 
+	return cli.handleResponse(resp, opt)
+}
+
+// handleResponse handle the response that decompresses the body of the response if it was
+// compressed, and validates the status code.
+func (cli *Client) handleResponse(
+	resp *http.Response,
+	opt RequestOptions,
+) (*http.Response, error) {
+	resp = cli.decodeResponseBody(resp)
+
 	return cli.validateResponse(resp, opt)
+}
+
+// decodeResponseBody tries to get the encoding type of the response's content, and decode
+// (decompress) it if the response's body was compressed by `gzip` or `deflate`.
+func (cli *Client) decodeResponseBody(resp *http.Response) *http.Response {
+	switch resp.Header.Get("Content-Encoding") {
+	case "deflate":
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return resp
+		}
+
+		reader := flate.NewReader(bytes.NewReader(data))
+		resp.Body.Close()
+		resp.Body = reader
+	case "gzip", "x-gzip":
+		reader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return nil
+		}
+		resp.Body.Close()
+		resp.Body = reader
+	}
+
+	return resp
 }
 
 // validateResponse validates the status code of the response, and returns fail if the result of

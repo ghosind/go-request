@@ -1,11 +1,15 @@
 package internal
 
 import (
+	"bytes"
+	"compress/flate"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type MockServer struct {
@@ -80,6 +84,11 @@ func (server *MockServer) defaultHandler(rw http.ResponseWriter, req *http.Reque
 		panic(fmt.Sprintf("unexpected error: %v", err))
 	}
 
+	data, err = encodingResponse(rw, req, data)
+	if err != nil {
+		panic(fmt.Sprintf("unexpected error: %v", err))
+	}
+
 	rw.WriteHeader(http.StatusOK)
 	if _, err := rw.Write(data); err != nil {
 		panic(fmt.Sprintf("unexpected error: %v", err))
@@ -99,4 +108,45 @@ func getIntParameter(req *http.Request, key string, defaultValue int64) int64 {
 	}
 
 	return intValue
+}
+
+func encodingResponse(rw http.ResponseWriter, req *http.Request, data []byte) ([]byte, error) {
+	encodings := strings.Split(req.Header.Get("Accept-Encoding"), ",")
+	encoding := encodings[0]
+
+	contentEncoding := req.URL.Query().Get("contentEncoding")
+
+	if encoding != "" {
+		if contentEncoding != "" {
+			rw.Header().Set("Content-Encoding", contentEncoding) // for test error case
+		} else {
+			rw.Header().Set("Content-Encoding", encoding)
+		}
+	}
+
+	switch encoding {
+	case "deflate":
+		buf := bytes.NewBuffer([]byte{})
+		writer, err := flate.NewWriter(buf, -1)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := writer.Write(data); err != nil {
+			return nil, err
+		}
+		writer.Close()
+
+		return buf.Bytes(), nil
+	case "gzip", "x-gzip":
+		buf := bytes.NewBuffer([]byte{})
+		writer := gzip.NewWriter(buf)
+		if _, err := writer.Write(data); err != nil {
+			return nil, err
+		}
+		writer.Close()
+
+		return buf.Bytes(), nil
+	default:
+		return data, nil
+	}
 }

@@ -26,6 +26,7 @@ An easy-to-use HTTP request tool for Golang.
 - Timeouts or self-control context.
 - Serialize request body automatically.
 - Response body deserialization wrapper.
+- Decode the compressed response body automatically.
 
 ## Installation
 

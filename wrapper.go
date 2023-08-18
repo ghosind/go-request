@@ -24,6 +24,7 @@ func ToObject[T any](resp *http.Response, err error) (*T, *http.Response, error)
 	}
 
 	defer resp.Body.Close()
+
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, resp, err

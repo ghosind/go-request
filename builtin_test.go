@@ -104,6 +104,62 @@ func TestRequestWithBody(t *testing.T) {
 	a.EqualNow(*data.Body, `{"data":"Hello world!"}`)
 }
 
+func TestRequestWithGZipEncodedBody(t *testing.T) {
+	a := assert.New(t)
+
+	data, _, err := ToObject[testResponse](Request("", RequestOptions{
+		BaseURL: "http://localhost:8080",
+		Headers: map[string][]string{
+			"Accept-Encoding": {"gzip", "deflate"},
+		},
+	}))
+	a.NilNow(err)
+
+	a.NotNilNow(data.Method)
+	a.EqualNow(*data.Method, "GET")
+}
+
+func TestRequestWithDeflateEncodedBody(t *testing.T) {
+	a := assert.New(t)
+
+	data, _, err := ToObject[testResponse](Request("", RequestOptions{
+		BaseURL: "http://localhost:8080",
+		Headers: map[string][]string{
+			"Accept-Encoding": {"deflate"},
+		},
+	}))
+	a.NilNow(err)
+
+	a.NotNilNow(data.Method)
+	a.EqualNow(*data.Method, "GET")
+}
+
+func TestRequestWithInvalidContentEncoding(t *testing.T) {
+	a := assert.New(t)
+
+	_, _, err := ToObject[testResponse](Request("", RequestOptions{
+		BaseURL: "http://localhost:8080",
+		Headers: map[string][]string{
+			"Accept-Encoding": {"gzip"},
+		},
+		Parameters: map[string][]string{
+			"contentEncoding": {"deflate"},
+		},
+	}))
+	a.NotNilNow(err)
+
+	_, _, err = ToString(Request("", RequestOptions{
+		BaseURL: "http://localhost:8080",
+		Headers: map[string][]string{
+			"Accept-Encoding": {"gzip"},
+		},
+		Parameters: map[string][]string{
+			"contentEncoding": {"deflate"},
+		},
+	}))
+	a.NotNilNow(err)
+}
+
 func TestRequestWithParameters(t *testing.T) {
 	a := assert.New(t)
 
