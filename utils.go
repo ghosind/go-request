@@ -2,10 +2,17 @@ package request
 
 import "strings"
 
-// getContentType gets the first part of the value of the `Content-Type` field in the response
-// headers.
-func getContentType(s string) string {
-	contentType, _, _ := strings.Cut(s, ";") // remove parameters
+// getResponseType gets the type of the response's content from the `Content-Type` field in the
+// response headers.
+func getContentType(contentType string) string {
+	contentType = strings.ToLower(contentType)
 
-	return strings.TrimSpace(contentType)
+	switch {
+	case strings.Contains(contentType, "json"):
+		return RequestContentTypeJSON
+	case contentType == "":
+		return RequestContentTypeJSON
+	default:
+		return "unknown"
+	}
 }
