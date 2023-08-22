@@ -2,6 +2,7 @@ package request
 
 import (
 	"net/http"
+	"net/url"
 	"sync"
 )
 
@@ -18,6 +19,8 @@ type Client struct {
 	// ValidateStatus defines whether the status code of the response is valid or not, and it'll
 	// return an error if fails to validate the status code.
 	ValidateStatus func(int) bool
+	// Parameters are the parameters to be sent.
+	Parameters map[string][]string
 
 	// clientPool is for save http.Client instances.
 	clientPool sync.Pool
@@ -49,6 +52,9 @@ type Config struct {
 	//	  },
 	//	})
 	ValidateStatus func(int) bool
+	// Parameters are the parameters to be sent for all requests of the client. It will be
+	// overwritten if the same key is in the parameters of the request options.
+	Parameters map[string][]string
 }
 
 const (
@@ -78,6 +84,7 @@ func New(config ...Config) *Client {
 	cli := new(Client)
 
 	cli.Headers = make(http.Header)
+	cli.Parameters = make(url.Values)
 	cli.clientPool = sync.Pool{
 		New: func() any {
 			return new(http.Client)
@@ -92,7 +99,9 @@ func New(config ...Config) *Client {
 		cli.UserAgent = cfg.UserAgent
 		cli.MaxRedirects = cfg.MaxRedirects
 		cli.ValidateStatus = cfg.ValidateStatus
+
 		cli.initClientHeaders(cfg.Headers)
+		cli.initClientParameters(cfg.Parameters)
 	}
 
 	return cli
@@ -158,6 +167,16 @@ func (cli *Client) initClientHeaders(headers map[string][]string) {
 		if len(v) > 0 {
 			cli.Headers[k] = make([]string, len(v))
 			copy(cli.Headers[k], v)
+		}
+	}
+}
+
+// initClientParameters initializes client's Parameters field from config.
+func (cli *Client) initClientParameters(parameters map[string][]string) {
+	for k, v := range parameters {
+		if len(v) > 0 {
+			cli.Parameters[k] = make([]string, len(v))
+			copy(cli.Parameters[k], v)
 		}
 	}
 }

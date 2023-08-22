@@ -339,6 +339,7 @@ func (cli *Client) setUserAgent(req *http.Request, opt RequestOptions) {
 	req.Header.Set("User-Agent", userAgent)
 }
 
+// parseURL gets the URL of the request and adds the parameters into the query of the request.
 func (cli *Client) parseURL(uri string, opt RequestOptions) (string, error) {
 	baseURL, extraPath, err := cli.getURL(uri, opt)
 	if err != nil {
@@ -354,20 +355,35 @@ func (cli *Client) parseURL(uri string, opt RequestOptions) (string, error) {
 		obj.Path = path.Join(obj.Path, extraPath)
 	}
 
-	if opt.Parameters != nil {
-		// attach parameters to request url
-		query := obj.Query()
-
-		for k, vv := range opt.Parameters {
-			for _, v := range vv {
-				query.Add(k, v)
-			}
-		}
-
-		obj.RawQuery = query.Encode()
-	}
+	obj.RawQuery = cli.getQueryParameters(obj.Query(), opt)
 
 	return obj.String(), nil
+}
+
+// getQueryParameters get the parameters of the request from the request options and the client's
+// parameters.
+func (cli *Client) getQueryParameters(query url.Values, opt RequestOptions) string {
+	if opt.Parameters != nil {
+		for k, vv := range opt.Parameters {
+			if !query.Has(k) {
+				query[k] = make([]string, 0, len(vv))
+			}
+			query[k] = append(query[k], vv...)
+		}
+	}
+
+	if cli.Parameters != nil {
+		for k, vv := range cli.Parameters {
+			if query.Has(k) {
+				continue
+			}
+
+			query[k] = make([]string, 0, len(vv))
+			query[k] = append(query[k], vv...)
+		}
+	}
+
+	return query.Encode()
 }
 
 // getURL returns the base url and extra path components from url parameter, optional config, and

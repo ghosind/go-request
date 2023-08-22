@@ -214,6 +214,22 @@ func TestParseURL(t *testing.T) {
 	})
 	a.NilNow(err)
 	a.Equal(url, "http://example.com?q=test1&q=test2&t=2&w=1")
+
+	cli = New(Config{
+		Parameters: map[string][]string{
+			"q": {"test1"},
+			"w": {"1"},
+		},
+	})
+
+	url, err = cli.parseURL("http://example.com", RequestOptions{
+		Parameters: map[string][]string{
+			"q": {"test2"},
+			"t": {"2"},
+		},
+	})
+	a.NilNow(err)
+	a.Equal(url, "http://example.com?q=test2&t=2&w=1")
 }
 
 func TestGetURL(t *testing.T) {
