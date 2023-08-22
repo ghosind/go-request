@@ -305,7 +305,7 @@ func TestGetContext(t *testing.T) {
 	_, ok = ctx.Deadline()
 	a.EqualNow(ok, false)
 
-	cli.timeout = 3000
+	cli.Timeout = 3000
 	ctx, _ = cli.getContext(RequestOptions{})
 	deadline, ok = ctx.Deadline()
 	a.EqualNow(ok, true)

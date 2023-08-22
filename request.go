@@ -426,8 +426,8 @@ func (cli *Client) getContext(opt RequestOptions) (context.Context, context.Canc
 	timeout := RequestTimeoutDefault
 	if opt.Timeout > 0 || opt.Timeout == RequestTimeoutNoLimit {
 		timeout = opt.Timeout
-	} else if cli.timeout > 0 || cli.timeout == RequestTimeoutNoLimit {
-		timeout = cli.timeout
+	} else if cli.Timeout > 0 || cli.Timeout == RequestTimeoutNoLimit {
+		timeout = cli.Timeout
 	}
 
 	if timeout == RequestTimeoutNoLimit {

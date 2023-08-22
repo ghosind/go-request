@@ -21,11 +21,11 @@ type Client struct {
 	ValidateStatus func(int) bool
 	// Parameters are the parameters to be sent.
 	Parameters map[string][]string
+	// Timeout specifies the time before the request times out.
+	Timeout int
 
 	// clientPool is for save http.Client instances.
 	clientPool sync.Pool
-	// timeout specifies the time before the request times out.
-	timeout int
 }
 
 // Config is the config for the HTTP requesting client.
@@ -95,7 +95,7 @@ func New(config ...Config) *Client {
 		cfg := config[0]
 
 		cli.BaseURL = cfg.BaseURL
-		cli.timeout = cfg.Timeout
+		cli.Timeout = cfg.Timeout
 		cli.UserAgent = cfg.UserAgent
 		cli.MaxRedirects = cfg.MaxRedirects
 		cli.ValidateStatus = cfg.ValidateStatus
