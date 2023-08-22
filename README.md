@@ -154,9 +154,10 @@ resp, err := cli.GET("/products/1")
 |:-----:|:----:|-------------|
 | `BaseURL` | `string` | The base url for all requests that performing by this client instance. |
 | `Headers` | `map[string][]string` | Custom headers to be sent. |
+| `MaxRedirects` | `int` | The maximum number of redirects for this client, default 5. |
+| `Parameters` | `map[string][]string` | Custom query string parameters to be sent. |
 | `Timeout` | `int` | Timeout in milliseconds. |
 | `UserAgent` | `string` | Custom user agent value. |
-| `MaxRedirects` | `int` | The maximum number of redirects for this client, default 5. |
 | `ValidateStatus` | `func(int) bool` | The function checks whether the status code of the response is valid or not. |
 
 ## Request Config
@@ -165,15 +166,15 @@ There are the available config options for performing a request, and all fields 
 
 | Field | Type | Description |
 |:-----:|:----:|-------------|
-| `BaseURL` | `string` | The base url for this requests. |
-| `Parameters` | `map[string][]string` | Custom query string parameters to be sent. |
-| `Headers` | `map[string][]string` | Custom headers to be sent. |
-| `Timeout` | `int` | Timeout in milliseconds. |
-| `Context` | `context.Context` | Self-control context. |
-| `Body` | `any` | The request body. |
-| `Method` | `string` | HTTP request method, default `GET`. |
-| `ContentType` | `string` | The content type of this request. Available options are: `"json"`, and default `"json"`. |
-| `UserAgent` | `string` | Custom user agent value. |
 | `Auth` | `*BasicAuthConfig` | HTTP Basic Auth config. |
+| `BaseURL` | `string` | The base url for this requests. |
+| `Body` | `any` | The request body. |
+| `ContentType` | `string` | The content type of this request. Available options are: `"json"`, and default `"json"`. |
+| `Context` | `context.Context` | Self-control context. |
+| `Headers` | `map[string][]string` | Custom headers to be sent. |
 | `MaxRedirects` | `int` | The maximum number of redirects for the request, default 5. |
+| `Method` | `string` | HTTP request method, default `GET`. |
+| `Parameters` | `map[string][]string` | Custom query string parameters to be sent. |
+| `Timeout` | `int` | Timeout in milliseconds. |
+| `UserAgent` | `string` | Custom user agent value. |
 | `ValidateStatus` | `func(int) bool` | The function checks whether the status code of the response is valid or not. |

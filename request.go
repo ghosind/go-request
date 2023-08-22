@@ -17,6 +17,16 @@ import (
 
 // RequestOptions is the config for a request.
 type RequestOptions struct {
+	// Auth indicates that HTTP Basic auth should be used. It will set an `Authorization` header,
+	// and it'll also overwriting any existing `Authorization` field in the request header.
+	//
+	//	resp, err := request.Request("https://example.com", request.RequestOptions{
+	//	  Auth: &request.BasicAuthConfig{
+	//	    Username: "user",
+	//	    Password: "pass",
+	//	  },
+	//	})
+	Auth *BasicAuthConfig
 	// BaseURL will prepended to the url of the request unless the url is absolute.
 	//
 	//	resp, err := request.Request("/test", request.RequestOptions{
@@ -24,31 +34,6 @@ type RequestOptions struct {
 	//	})
 	//	// http://example.com/test
 	BaseURL string
-	// Timeout specifies the number of milliseconds before the request times out. This value will be
-	// ignored if the `Content` field in the request options is set. It indicates no time-out
-	// limitation if the value is -1.
-	Timeout int
-	// Context is a `context.Content` object that is used for manipulating the request by yourself.
-	// The `Timeout` field will be ignored if this value is not empty, and you need to control
-	// timeout by yourself.
-	Context context.Context
-	// Parameters are the URL parameters to be sent with the request.
-	//
-	//	resp, err := request.Request("http://example.com", request.RequestOptions{
-	//	  Parameters: map[string][]string{
-	//	    "name": {"John"},
-	//	  },
-	//	})
-	//	// http://example.com?name=John
-	Parameters map[string][]string
-	// Headers are custom headers to be sent.
-	//
-	//	resp, err := request.Request("http://example.com", request.RequestOptions{
-	//	  Headers: map[string][]string{
-	//	    "Authorization": {"Bearer XXXXX"},
-	//	  },
-	//	})
-	Headers map[string][]string
 	// Body is the data to be sent as the request body. It'll be encoded with the content type
 	// specified by the `ContentType` field in the request options, or encoded as a JSON if the
 	// `ContentType` field is empty. It'll skip the encode processing if the value is a string or a
@@ -67,26 +52,56 @@ type RequestOptions struct {
 	//	  },
 	//	})
 	Body any
-	// Method indicates the HTTP method of the request, default GET.
-	Method string
 	// ContentType indicates the type of data that will encode and send to the server. Available
 	// options are: "json", default "json".
+	//
+	//	request.POST("http://example.com", request.RequestOptions{
+	//	  ContentType: request.RequestContentTypeJSON, // "json"
+	//	  // ...
+	//	})
 	ContentType string
+	// Context is a `context.Content` object that is used for manipulating the request by yourself.
+	// The `Timeout` field will be ignored if this value is not empty, and you need to control
+	// timeout by yourself.
+	//
+	//	ctx, canFunc := context.WithTimeout(context.Background(), time.Second)
+	//	defer canFunc()
+	//	resp, err := request.Request("http://example.com", request.RequestOptions{
+	//	  Context: ctx,
+	//	})
+	Context context.Context
+	// Headers are custom headers to be sent.
+	//
+	//	resp, err := request.Request("http://example.com", request.RequestOptions{
+	//	  Headers: map[string][]string{
+	//	    "Authorization": {"Bearer XXXXX"},
+	//	  },
+	//	})
+	Headers map[string][]string
+	// MaxRedirects defines the maximum number of redirects, default 5.
+	MaxRedirects int
+	// Method indicates the HTTP method of the request, default GET.
+	//
+	//	request.Request("http://example.com", request.RequestOptions{
+	//	  Method: http.MethodPost, // "POST"
+	//	})
+	Method string
+	// Parameters are the URL parameters to be sent with the request.
+	//
+	//	resp, err := request.Request("http://example.com", request.RequestOptions{
+	//	  Parameters: map[string][]string{
+	//	    "name": {"John"},
+	//	  },
+	//	})
+	//	// http://example.com?name=John
+	Parameters map[string][]string
+	// Timeout specifies the number of milliseconds before the request times out. This value will be
+	// ignored if the `Content` field in the request options is set. It indicates no time-out
+	// limitation if the value is -1.
+	Timeout int
 	// UserAgent sets the client's User-Agent field in the request header. It'll overwrite the value
 	// of the `User-Agent` field in the request headers.
 	UserAgent string
-	// Auth indicates that HTTP Basic auth should be used. It will set an `Authorization` header,
-	// and it'll also overwriting any existing `Authorization` field in the request header.
-	//
-	//	resp, err := request.Request("https://example.com", request.RequestOptions{
-	//	  Auth: &request.BasicAuthConfig{
-	//	    Username: "user",
-	//	    Password: "pass",
-	//	  },
-	//	})
-	Auth *BasicAuthConfig
-	// MaxRedirects defines the maximum number of redirects, default 5.
-	MaxRedirects int
 	// ValidateStatus defines whether the status code of the response is valid or not, and it'll
 	// return an error if fails to validate the status code. Default, it sets the result to fail if
 	// the status code is less than 200, or greater than and equal to 400.

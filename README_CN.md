@@ -153,9 +153,10 @@ resp, err := cli.GET("/products/1")
 |:-----:|:----:|-------------|
 | `BaseURL` | `string` | 基础URL，在请求时将会对其与请求的`url`参数进行拼接，成为最终请求的目标地址。 |
 | `Headers` | `map[string][]string` | 自定义头部 |
+| `MaxRedirects` | `int` | 最大跳转次数 |
+| `Parameters` | `map[string][]string` | 自定义参数 |
 | `Timeout` | `int` | 以毫秒为单位的超时时长设定 |
 | `UserAgent` | `string` | 自定义UserAgent |
-| `MaxRedirects` | `int` | 最大跳转次数 |
 | `ValidateStatus` | `func(int) bool` | 响应有效性判断方法 |
 
 ## 请求配置
@@ -164,15 +165,15 @@ resp, err := cli.GET("/products/1")
 
 | 属性 | 类型 | 描述 |
 |:-----:|:----:|-------------|
-| `BaseURL` | `string` | 基础URL，在请求时将会对其与请求的`url`参数进行拼接，成为最终请求的目标地址。 |
-| `Parameters` | `map[string][]string` | 自定义参数 |
-| `Headers` | `map[string][]string` | 自定义请求头部 |
-| `Timeout` | `int` | 以毫秒为单位的超时时长设定 |
-| `Context` | `context.Context` | 用于请求的上下文 |
-| `Body` | `any` | 请求内容 |
-| `Method` | `string` | 请求方式，默认为`GET` |
-| `ContentType` | `string` | 请求内容类型，当前可用值包括：`"json"`，默认为`"json"` |
-| `UserAgent` | `string` | 自定义UserAgent |
 | `Auth` | `*BasicAuthConfig` | HTTP Basic Auth设置 |
+| `BaseURL` | `string` | 基础URL，在请求时将会对其与请求的`url`参数进行拼接，成为最终请求的目标地址。 |
+| `Body` | `any` | 请求内容 |
+| `ContentType` | `string` | 请求内容类型，当前可用值包括：`"json"`，默认为`"json"` |
+| `Context` | `context.Context` | 用于请求的上下文 |
+| `Headers` | `map[string][]string` | 自定义请求头部 |
 | `MaxRedirects` | `int` | 最大跳转次数 |
+| `Method` | `string` | 请求方式，默认为`GET` |
+| `Parameters` | `map[string][]string` | 自定义参数 |
+| `Timeout` | `int` | 以毫秒为单位的超时时长设定 |
+| `UserAgent` | `string` | 自定义UserAgent |
 | `ValidateStatus` | `func(int) bool` | 响应有效性判断方法 |

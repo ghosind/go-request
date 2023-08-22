@@ -12,17 +12,17 @@ type Client struct {
 	BaseURL string
 	// Headers are custom headers to be sent.
 	Headers map[string][]string
-	// UserAgent sets the client's User-Agent field in the request header.
-	UserAgent string
 	// MaxRedirects defines the maximum number of redirects for this client, default 5.
 	MaxRedirects int
-	// ValidateStatus defines whether the status code of the response is valid or not, and it'll
-	// return an error if fails to validate the status code.
-	ValidateStatus func(int) bool
 	// Parameters are the parameters to be sent.
 	Parameters map[string][]string
 	// Timeout specifies the time before the request times out.
 	Timeout int
+	// UserAgent sets the client's User-Agent field in the request header.
+	UserAgent string
+	// ValidateStatus defines whether the status code of the response is valid or not, and it'll
+	// return an error if fails to validate the status code.
+	ValidateStatus func(int) bool
 
 	// clientPool is for save http.Client instances.
 	clientPool sync.Pool
@@ -32,15 +32,18 @@ type Client struct {
 type Config struct {
 	// BaseURL will be prepended to all request URL unless URL is absolute.
 	BaseURL string
-	// Timeout is request timeout in milliseconds.
-	Timeout int
 	// Headers are custom headers to be sent, and they'll be overwritten if the
 	// same key is presented in the request.
 	Headers map[string][]string
-	// UserAgent sets the client's User-Agent field in the request header.
-	UserAgent string
 	// MaxRedirects defines the maximum number of redirects for this client, default 5.
 	MaxRedirects int
+	// Parameters are the parameters to be sent for all requests of the client. It will be
+	// overwritten if the same key is in the parameters of the request options.
+	Parameters map[string][]string
+	// Timeout is request timeout in milliseconds.
+	Timeout int
+	// UserAgent sets the client's User-Agent field in the request header.
+	UserAgent string
 	// ValidateStatus defines whether the status code of the response is valid or not, and it'll
 	// return an error if fails to validate the status code. Default, it sets the result to fail if
 	// the status code is less than 200, or greater than and equal to 400.
@@ -52,9 +55,6 @@ type Config struct {
 	//	  },
 	//	})
 	ValidateStatus func(int) bool
-	// Parameters are the parameters to be sent for all requests of the client. It will be
-	// overwritten if the same key is in the parameters of the request options.
-	Parameters map[string][]string
 }
 
 const (
@@ -83,21 +83,22 @@ const (
 func New(config ...Config) *Client {
 	cli := new(Client)
 
-	cli.Headers = make(http.Header)
-	cli.Parameters = make(url.Values)
 	cli.clientPool = sync.Pool{
 		New: func() any {
 			return new(http.Client)
 		},
 	}
 
+	cli.Headers = make(http.Header)
+	cli.Parameters = make(url.Values)
+
 	if len(config) > 0 {
 		cfg := config[0]
 
 		cli.BaseURL = cfg.BaseURL
+		cli.MaxRedirects = cfg.MaxRedirects
 		cli.Timeout = cfg.Timeout
 		cli.UserAgent = cfg.UserAgent
-		cli.MaxRedirects = cfg.MaxRedirects
 		cli.ValidateStatus = cfg.ValidateStatus
 
 		cli.initClientHeaders(cfg.Headers)
