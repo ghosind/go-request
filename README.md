@@ -171,6 +171,7 @@ There are the available config options for performing a request, and all fields 
 | `Body` | `any` | The request body. |
 | `ContentType` | `string` | The content type of this request. Available options are: `"json"`, and default `"json"`. |
 | `Context` | `context.Context` | Self-control context. |
+| `DisableDecompress` | `bool` | Indicates whether or not disable decompression of the response body automatically. |
 | `Headers` | `map[string][]string` | Custom headers to be sent. |
 | `MaxRedirects` | `int` | The maximum number of redirects for the request, default 5. |
 | `Method` | `string` | HTTP request method, default `GET`. |

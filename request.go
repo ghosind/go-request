@@ -70,6 +70,9 @@ type RequestOptions struct {
 	//	  Context: ctx,
 	//	})
 	Context context.Context
+	// DisableDecompress indicates whether or not disable decompression of the response body
+	// automatically. If it is set to `true`, it will not decompress the response body.
+	DisableDecompress bool
 	// Headers are custom headers to be sent.
 	//
 	//	resp, err := request.Request("http://example.com", request.RequestOptions{
@@ -169,7 +172,9 @@ func (cli *Client) handleResponse(
 	resp *http.Response,
 	opt RequestOptions,
 ) (*http.Response, error) {
-	resp = cli.decodeResponseBody(resp)
+	if !opt.DisableDecompress {
+		resp = cli.decodeResponseBody(resp)
+	}
 
 	return cli.validateResponse(resp, opt)
 }
@@ -187,6 +192,7 @@ func (cli *Client) decodeResponseBody(resp *http.Response) *http.Response {
 		reader := flate.NewReader(bytes.NewReader(data))
 		resp.Body.Close()
 		resp.Body = reader
+		resp.Header.Del("Content-Encoding")
 	case "gzip", "x-gzip":
 		reader, err := gzip.NewReader(resp.Body)
 		if err != nil {
@@ -194,6 +200,7 @@ func (cli *Client) decodeResponseBody(resp *http.Response) *http.Response {
 		}
 		resp.Body.Close()
 		resp.Body = reader
+		resp.Header.Del("Content-Encoding")
 	}
 
 	return resp

@@ -170,6 +170,7 @@ resp, err := cli.GET("/products/1")
 | `Body` | `any` | 请求内容 |
 | `ContentType` | `string` | 请求内容类型，当前可用值包括：`"json"`，默认为`"json"` |
 | `Context` | `context.Context` | 用于请求的上下文 |
+| `DisableDecompress` | `bool` | 是否禁用自动解压 |
 | `Headers` | `map[string][]string` | 自定义请求头部 |
 | `MaxRedirects` | `int` | 最大跳转次数 |
 | `Method` | `string` | 请求方式，默认为`GET` |
