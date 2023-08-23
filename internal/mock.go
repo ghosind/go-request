@@ -84,6 +84,8 @@ func (server *MockServer) defaultHandler(rw http.ResponseWriter, req *http.Reque
 		panic(fmt.Sprintf("unexpected error: %v", err))
 	}
 
+	rw.Header().Set("Content-Type", "application/json")
+
 	data, err = encodingResponse(rw, req, data)
 	if err != nil {
 		panic(fmt.Sprintf("unexpected error: %v", err))
