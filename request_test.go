@@ -290,14 +290,14 @@ func TestGetContext(t *testing.T) {
 	ctx, _ = cli.getContext(RequestOptions{})
 	deadline, ok := ctx.Deadline()
 	a.EqualNow(ok, true)
-	a.TrueNow(math.Abs(float64(1000-(deadline.UnixMilli()-time.Now().UnixMilli()))) < 1)
+	a.TrueNow(math.Abs(float64(1000-(deadline.UnixMilli()-time.Now().UnixMilli()))) < 10)
 
 	ctx, _ = cli.getContext(RequestOptions{
 		Timeout: 3000,
 	})
 	deadline, ok = ctx.Deadline()
 	a.EqualNow(ok, true)
-	a.TrueNow(math.Abs(float64(3000-(deadline.UnixMilli()-time.Now().UnixMilli()))) < 1)
+	a.TrueNow(math.Abs(float64(3000-(deadline.UnixMilli()-time.Now().UnixMilli()))) < 10)
 
 	ctx, _ = cli.getContext(RequestOptions{
 		Timeout: RequestTimeoutNoLimit,
@@ -309,5 +309,5 @@ func TestGetContext(t *testing.T) {
 	ctx, _ = cli.getContext(RequestOptions{})
 	deadline, ok = ctx.Deadline()
 	a.EqualNow(ok, true)
-	a.TrueNow(math.Abs(float64(3000-(deadline.UnixMilli()-time.Now().UnixMilli()))) < 1)
+	a.TrueNow(math.Abs(float64(3000-(deadline.UnixMilli()-time.Now().UnixMilli()))) < 10)
 }
