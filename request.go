@@ -121,7 +121,10 @@ func (cli *Client) validateResponse(
 
 // makeRequest creates a new `http.Request` object with the specific HTTP method, request url, and
 // other configurations.
-func (cli *Client) makeRequest(method, url string, opt RequestOptions) (*http.Request, context.CancelFunc, error) {
+func (cli *Client) makeRequest(
+	method, url string,
+	opt RequestOptions,
+) (*http.Request, context.CancelFunc, error) {
 	method, err := cli.getRequestMethod(method)
 	if err != nil {
 		return nil, nil, err

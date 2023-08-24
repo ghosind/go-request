@@ -50,7 +50,17 @@ func TestGetRequestMethod(t *testing.T) {
 	a.Equal(method, "GET")
 
 	// valid methods
-	for _, method := range []string{"Connect", "delete", "get", http.MethodHead, "Options", "PATCH", "PoST", "PuT", "TRACE"} {
+	for _, method := range []string{
+		"Connect",
+		"delete",
+		"get",
+		http.MethodHead,
+		"Options",
+		"PATCH",
+		"PoST",
+		"PuT",
+		"TRACE",
+	} {
 		ret, err := cli.getRequestMethod(method)
 		a.Nil(err)
 		a.Equal(ret, strings.ToUpper(method))
