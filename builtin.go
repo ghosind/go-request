@@ -56,3 +56,14 @@ func POST(url string, opt ...RequestOptions) (*http.Response, error) {
 func PUT(url string, opt ...RequestOptions) (*http.Response, error) {
 	return defaultClient.PUT(url, opt...)
 }
+
+// Req creates a request with chaining API, and sets the destination to `url`.
+//
+//	resp, err := request.Req("http://example.com").
+//	  POST().
+//	  Body(data).
+//	  SetHeader("Accept-Encoding", "gzip").
+//	  Do()
+func Req(url string) *RequestOptions {
+	return defaultClient.Req(url)
+}

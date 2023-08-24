@@ -74,6 +74,7 @@ func (server *MockServer) defaultHandler(rw http.ResponseWriter, req *http.Reque
 		"body":        string(payload),
 		"query":       req.URL.RawQuery,
 		"userAgent":   req.Header.Get("User-Agent"),
+		"headers":     req.Header,
 	}
 	if token := req.Header.Get("Authorization"); token != "" {
 		body["token"] = token

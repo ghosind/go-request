@@ -23,13 +23,14 @@ func TestMain(m *testing.M) {
 }
 
 type testResponse struct {
-	Path        *string `json:"path"`
-	Method      *string `json:"method"`
-	ContentType *string `json:"contentType"`
-	Body        *string `json:"body"`
-	Query       *string `json:"query"`
-	Token       *string `json:"token"`
-	UserAgent   *string `json:"userAgent"`
+	Path        *string              `json:"path"`
+	Method      *string              `json:"method"`
+	ContentType *string              `json:"contentType"`
+	Body        *string              `json:"body"`
+	Query       *string              `json:"query"`
+	Token       *string              `json:"token"`
+	UserAgent   *string              `json:"userAgent"`
+	Headers     *map[string][]string `json:"headers"`
 }
 
 func TestRequestWithoutOptions(t *testing.T) {

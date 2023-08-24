@@ -162,6 +162,22 @@ func (cli *Client) PUT(url string, opt ...RequestOptions) (*http.Response, error
 	return cli.request(http.MethodPut, url, opt...)
 }
 
+// Req creates a request with chaining API, and sets the destination to `url`.
+//
+//	resp, err := cli.Req("http://example.com").
+//	  POST().
+//	  Body(data).
+//	  SetHeader("Accept-Encoding", "gzip").
+//	  Do()
+func (cli *Client) Req(url string) *RequestOptions {
+	opt := new(RequestOptions)
+
+	opt.url = url
+	opt.client = cli
+
+	return opt
+}
+
 // initClientHeaders initializes client's Headers field from config.
 func (cli *Client) initClientHeaders(headers map[string][]string) {
 	for k, v := range headers {
