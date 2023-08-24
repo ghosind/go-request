@@ -25,7 +25,7 @@ type Client struct {
 	ValidateStatus func(int) bool
 
 	// clientPool is for save http.Client instances.
-	clientPool sync.Pool
+	clientPool *sync.Pool
 }
 
 // Config is the config for the HTTP requesting client.
@@ -83,7 +83,7 @@ const (
 func New(config ...Config) *Client {
 	cli := new(Client)
 
-	cli.clientPool = sync.Pool{
+	cli.clientPool = &sync.Pool{
 		New: func() any {
 			return new(http.Client)
 		},
@@ -184,6 +184,14 @@ func (cli *Client) initClientParameters(parameters map[string][]string) {
 
 // getHTTPClient gets an `http.Client` from the pool, and resets it to default state.
 func (cli *Client) getHTTPClient(opt RequestOptions) *http.Client {
+	if cli.clientPool == nil {
+		cli.clientPool = &sync.Pool{
+			New: func() any {
+				return new(http.Client)
+			},
+		}
+	}
+
 	httpClient := cli.clientPool.Get().(*http.Client)
 
 	maxRedirects := opt.MaxRedirects
