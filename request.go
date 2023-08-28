@@ -297,6 +297,12 @@ func (cli *Client) getQueryParameters(query url.Values, opt RequestOptions) stri
 		}
 	}
 
+	if opt.ParametersSerializer != nil {
+		return opt.ParametersSerializer(query)
+	} else if cli.ParametersSerializer != nil {
+		return cli.ParametersSerializer(query)
+	}
+
 	return query.Encode()
 }
 

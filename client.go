@@ -16,6 +16,8 @@ type Client struct {
 	MaxRedirects int
 	// Parameters are the parameters to be sent.
 	Parameters map[string][]string
+	// ParametersSerializer is a function to charge of serializing the URL query parameters.
+	ParametersSerializer func(map[string][]string) string
 	// Timeout specifies the time before the request times out.
 	Timeout int
 	// UserAgent sets the client's User-Agent field in the request header.
@@ -40,6 +42,8 @@ type Config struct {
 	// Parameters are the parameters to be sent for all requests of the client. It will be
 	// overwritten if the same key is in the parameters of the request options.
 	Parameters map[string][]string
+	// ParametersSerializer is a function to charge of serializing the URL query parameters.
+	ParametersSerializer func(map[string][]string) string
 	// Timeout is request timeout in milliseconds.
 	Timeout int
 	// UserAgent sets the client's User-Agent field in the request header.
@@ -97,6 +101,7 @@ func New(config ...Config) *Client {
 
 		cli.BaseURL = cfg.BaseURL
 		cli.MaxRedirects = cfg.MaxRedirects
+		cli.ParametersSerializer = cfg.ParametersSerializer
 		cli.Timeout = cfg.Timeout
 		cli.UserAgent = cfg.UserAgent
 		cli.ValidateStatus = cfg.ValidateStatus

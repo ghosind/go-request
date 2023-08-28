@@ -88,6 +88,8 @@ type RequestOptions struct {
 	//	})
 	//	// http://example.com?name=John
 	Parameters map[string][]string
+	// ParametersSerializer is a function to charge of serializing the URL query parameters.
+	ParametersSerializer func(map[string][]string) string
 	// Timeout specifies the number of milliseconds before the request times out. This value will be
 	// ignored if the `Content` field in the request options is set. It indicates no time-out
 	// limitation if the value is -1.
@@ -414,6 +416,15 @@ func (opt *RequestOptions) SetParameter(key string, values []string) *RequestOpt
 //	// http://example.com?text=test&status=0&status=10
 func (opt *RequestOptions) SetParameters(parameters map[string][]string) *RequestOptions {
 	opt.Parameters = parameters
+
+	return opt
+}
+
+// SetParametersSerializer set the function that to charge of serializing the URL query parameters.
+func (opt *RequestOptions) SetParametersSerializer(
+	fn func(map[string][]string) string,
+) *RequestOptions {
+	opt.ParametersSerializer = fn
 
 	return opt
 }
