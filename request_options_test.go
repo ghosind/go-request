@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 	"net/url"
-	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/ghosind/go-assert"
@@ -245,64 +243,11 @@ func TestSetParametersChain(t *testing.T) {
 func TestParametersSerializerChain(t *testing.T) {
 	a := assert.New(t)
 
-	fn := func(params map[string][]string) string {
-		sb := strings.Builder{}
-
-		for k, v := range params {
-			if sb.Len() != 0 {
-				sb.WriteRune('&')
-			}
-
-			if len(v) == 1 {
-				sb.WriteString(url.QueryEscape(k))
-				sb.WriteRune('=')
-				sb.WriteString(url.QueryEscape(v[0]))
-			} else {
-				for i, vv := range v {
-					if i > 0 {
-						sb.WriteRune('&')
-					}
-					sb.WriteString(url.QueryEscape(k))
-					sb.WriteRune('[')
-					sb.WriteString(strconv.Itoa(i))
-					sb.WriteRune(']')
-					sb.WriteRune('=')
-					sb.WriteString(url.QueryEscape(vv))
-				}
-			}
-		}
-
-		return sb.String()
-	}
-
 	data, _, err := ToObject[testResponse](Req("http://localhost:8080").
 		SetParameters(map[string][]string{
 			"status": {"0", "10"},
 		}).
-		SetParametersSerializer(fn).
-		Do())
-	a.NilNow(err)
-	a.NotNilNow(data)
-	a.NotNilNow(data.Query)
-	a.Equal(*data.Query, "status[0]=0&status[1]=10")
-
-	data, _, err = ToObject[testResponse](Req("http://localhost:8080").
-		SetParameters(map[string][]string{
-			"status": {"0", "10"},
-		}).
-		Do())
-	a.NilNow(err)
-	a.NotNilNow(data)
-	a.NotNilNow(data.Query)
-	a.Equal(*data.Query, "status=0&status=10")
-
-	cli := New(Config{
-		ParametersSerializer: fn,
-	})
-	data, _, err = ToObject[testResponse](cli.Req("http://localhost:8080").
-		SetParameters(map[string][]string{
-			"status": {"0", "10"},
-		}).
+		SetParametersSerializer(customParametersSerializer).
 		Do())
 	a.NilNow(err)
 	a.NotNilNow(data)

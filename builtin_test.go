@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/ghosind/go-assert"
@@ -33,33 +35,74 @@ type testResponse struct {
 	Headers     *map[string][]string `json:"headers"`
 }
 
+func customParametersSerializer(params map[string][]string) string {
+	sb := strings.Builder{}
+
+	keys := make([]string, 0, len(params))
+	for k := range params {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		if sb.Len() != 0 {
+			sb.WriteRune('&')
+		}
+
+		v := params[k]
+
+		if len(v) == 1 {
+			sb.WriteString(url.QueryEscape(k))
+			sb.WriteRune('=')
+			sb.WriteString(url.QueryEscape(v[0]))
+		} else {
+			for i, vv := range v {
+				if i > 0 {
+					sb.WriteRune('&')
+				}
+				sb.WriteString(url.QueryEscape(k))
+				sb.WriteRune('[')
+				sb.WriteString(strconv.Itoa(i))
+				sb.WriteRune(']')
+				sb.WriteRune('=')
+				sb.WriteString(url.QueryEscape(vv))
+			}
+		}
+	}
+
+	return sb.String()
+}
+
 func TestRequestWithoutOptions(t *testing.T) {
 	a := assert.New(t)
 
-	data, _, err := ToString(Request("http://localhost:8080/test"))
+	content, _, err := ToString(Request("http://localhost:8080/test"))
 	a.NilNow(err)
 
-	a.NotEqualNow(len(data), 0)
+	a.NotEqualNow(len(content), 0)
 
-	payload := new(testResponse)
-	a.NilNow(json.Unmarshal([]byte(data), &payload))
+	data := new(testResponse)
+	a.NilNow(json.Unmarshal([]byte(content), &data))
 
-	a.NotNilNow(payload.Method)
-	a.NotNilNow(payload.Path)
-	a.EqualNow(*payload.Method, "GET")
-	a.EqualNow(*payload.Path, "/test")
+	a.NotNilNow(data.Method)
+	a.NotNilNow(data.Path)
+	a.EqualNow(*data.Method, "GET")
+	a.EqualNow(*data.Path, "/test")
 }
 
 func TestRequestWithOptions(t *testing.T) {
 	a := assert.New(t)
 
-	data, _, err := ToObject[testResponse](Request("", RequestOptions{
+	data, _, err := ToObject[testResponse](Request("/test", RequestOptions{
 		BaseURL: "http://localhost:8080",
 	}))
 	a.NilNow(err)
 
 	a.NotNilNow(data.Method)
+	a.NotNilNow(data.Path)
 	a.EqualNow(*data.Method, "GET")
+	a.EqualNow(*data.Path, "/test")
 }
 
 func TestRequestMethods(t *testing.T) {
@@ -146,7 +189,7 @@ func TestRequestWithInvalidContentEncoding(t *testing.T) {
 			"Accept-Encoding": {"gzip"},
 		},
 		Parameters: map[string][]string{
-			"contentEncoding": {"deflate"},
+			"contentEncoding": {"deflate"}, // force invalid encoding
 		},
 	}))
 	a.NotNilNow(err)
@@ -157,7 +200,7 @@ func TestRequestWithInvalidContentEncoding(t *testing.T) {
 			"Accept-Encoding": {"gzip"},
 		},
 		Parameters: map[string][]string{
-			"contentEncoding": {"deflate"},
+			"contentEncoding": {"deflate"}, // force invalid encoding
 		},
 	}))
 	a.NotNilNow(err)
@@ -316,6 +359,44 @@ func TestRequestWithNoRedirects(t *testing.T) {
 
 	tried := location.Query().Get("tried")
 	a.EqualNow(tried, "1")
+}
+
+func TestRequestWithParametersSerializer(t *testing.T) {
+	a := assert.New(t)
+
+	data, _, err := ToObject[testResponse](Request("http://localhost:8080", RequestOptions{
+		Parameters: map[string][]string{
+			"status": {"0", "10"},
+		},
+		ParametersSerializer: customParametersSerializer,
+	}))
+	a.NilNow(err)
+	a.NotNilNow(data)
+	a.NotNilNow(data.Query)
+	a.Equal(*data.Query, "status[0]=0&status[1]=10")
+
+	data, _, err = ToObject[testResponse](Request("http://localhost:8080", RequestOptions{
+		Parameters: map[string][]string{
+			"status": {"0", "10"},
+		},
+	}))
+	a.NilNow(err)
+	a.NotNilNow(data)
+	a.NotNilNow(data.Query)
+	a.Equal(*data.Query, "status=0&status=10")
+
+	cli := New(Config{
+		ParametersSerializer: customParametersSerializer,
+	})
+	data, _, err = ToObject[testResponse](cli.Request("http://localhost:8080", RequestOptions{
+		Parameters: map[string][]string{
+			"status": {"0", "10"},
+		},
+	}))
+	a.NilNow(err)
+	a.NotNilNow(data)
+	a.NotNilNow(data.Query)
+	a.Equal(*data.Query, "status[0]=0&status[1]=10")
 }
 
 func TestRequestWithDefaultValidateStatus(t *testing.T) {
