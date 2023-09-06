@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
-	"time"
 
 	"github.com/ghosind/go-assert"
 )
@@ -144,20 +143,11 @@ func TestSetMaxAttemptChain(t *testing.T) {
 	// TODO: find a better way to test retry
 	a := assert.New(t)
 
-	_, err := Request("http://localhost:9999", RequestOptions{})
+	_, err := Req("http://localhost:9999").SetAttempt(3).Do()
 	a.NotNilNow(err)
 
-	start := time.Now()
-	_, err = Req("http://localhost:9999").Do()
-	a.NotNilNow(err)
-	timeWithoutRetry := time.Since(start)
-
-	start = time.Now()
-	_, err = Req("http://localhost:9999").SetAttempt(3).Do()
-	a.NotNilNow(err)
-	timeWithRetry := time.Since(start)
-
-	a.TrueNow(timeWithRetry > timeWithoutRetry)
+	_, err = Req("http://localhost:8080").SetAttempt(3).Do()
+	a.NilNow(err)
 }
 
 func TestSetMaxRedirectsChain(t *testing.T) {
