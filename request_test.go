@@ -321,3 +321,25 @@ func TestGetContext(t *testing.T) {
 	a.EqualNow(ok, true)
 	a.TrueNow(math.Abs(float64(3000-(deadline.UnixMilli()-time.Now().UnixMilli()))) < 10)
 }
+
+func TestRetry(t *testing.T) {
+	// TODO: find a better way to test retry
+	a := assert.New(t)
+
+	_, err := Request("http://localhost:9999", RequestOptions{})
+	a.NotNilNow(err)
+
+	start := time.Now()
+	_, err = Request("http://localhost:9999", RequestOptions{})
+	a.NotNilNow(err)
+	timeWithoutRetry := time.Since(start)
+
+	start = time.Now()
+	_, err = Request("http://localhost:9999", RequestOptions{
+		MaxAttempt: 3,
+	})
+	a.NotNilNow(err)
+	timeWithRetry := time.Since(start)
+
+	a.TrueNow(timeWithRetry > timeWithoutRetry)
+}

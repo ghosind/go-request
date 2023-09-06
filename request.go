@@ -42,17 +42,37 @@ func (cli *Client) request(method, url string, opts ...RequestOptions) (*http.Re
 		defer canFunc()
 	}
 
-	httpClient := cli.getHTTPClient(opt)
-	defer func() {
-		cli.clientPool.Put(httpClient)
-	}()
-
-	resp, err := httpClient.Do(req)
+	resp, err := cli.sendRequest(req, opt)
 	if err != nil {
 		return resp, err
 	}
 
 	return cli.handleResponse(resp, opt)
+}
+
+// sendRequest gets an HTTP client from the HTTP clients pool and sends the request. It tries to
+// re-send the request when it fails to make the request and the number of attempts is less than
+// the maximum limitation.
+func (cli *Client) sendRequest(req *http.Request, opt RequestOptions) (*http.Response, error) {
+	attempt := 0
+	maxAttempt := 1
+	if opt.MaxAttempt > 0 {
+		maxAttempt = opt.MaxAttempt
+	}
+
+	httpClient := cli.getHTTPClient(opt)
+	defer func() {
+		cli.clientPool.Put(httpClient)
+	}()
+
+	for {
+		attempt++
+
+		resp, err := httpClient.Do(req)
+		if err == nil || (err != nil && attempt >= maxAttempt) {
+			return resp, err
+		}
+	}
 }
 
 // handleResponse handle the response that decompresses the body of the response if it was

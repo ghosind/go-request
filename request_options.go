@@ -71,6 +71,8 @@ type RequestOptions struct {
 	//	  },
 	//	})
 	Headers map[string][]string
+	// MaxAttempt defines the maximum number of attempts to request, default no retry.
+	MaxAttempt int
 	// MaxRedirects defines the maximum number of redirects, default 5.
 	MaxRedirects int
 	// Method indicates the HTTP method of the request, default GET.
@@ -253,6 +255,13 @@ func (opt *RequestOptions) SetHeader(key string, values []string) *RequestOption
 //	  Do()
 func (opt *RequestOptions) SetHeaders(headers map[string][]string) *RequestOptions {
 	opt.Headers = headers
+
+	return opt
+}
+
+// SetAttempt sets the maximum number of attempts to request.
+func (opt *RequestOptions) SetAttempt(maxAttempt int) *RequestOptions {
+	opt.MaxAttempt = maxAttempt
 
 	return opt
 }
