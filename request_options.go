@@ -72,6 +72,9 @@ type RequestOptions struct {
 	//	})
 	Headers map[string][]string
 	// MaxAttempt defines the maximum number of attempts to request, default no retry.
+	//
+	// It will always reuse the same context for the same request when retrying, and it may fail if
+	// the context is canceled or timeout.
 	MaxAttempt int
 	// MaxRedirects defines the maximum number of redirects, default 5.
 	MaxRedirects int

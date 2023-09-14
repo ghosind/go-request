@@ -335,4 +335,10 @@ func TestRetry(t *testing.T) {
 		MaxAttempt: 3,
 	})
 	a.NilNow(err)
+
+	_, err = Request("http://localhost:9999", RequestOptions{
+		MaxAttempt: 10, // large max attempt to ensure it's timeout
+		Timeout:    1,  // timeout immediately
+	})
+	a.NotNilNow(err)
 }

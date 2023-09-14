@@ -5,6 +5,7 @@ import (
 	"compress/flate"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -70,6 +71,8 @@ func (cli *Client) sendRequest(req *http.Request, opt RequestOptions) (*http.Res
 
 		resp, err := httpClient.Do(req)
 		if err == nil || (err != nil && attempt >= maxAttempt) {
+			return resp, err
+		} else if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 			return resp, err
 		}
 	}
