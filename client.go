@@ -1,6 +1,7 @@
 package request
 
 import (
+	"net"
 	"net/http"
 	"net/url"
 	"sync"
@@ -18,6 +19,8 @@ type Client struct {
 	Parameters map[string][]string
 	// ParametersSerializer is a function to charge of serializing the URL query parameters.
 	ParametersSerializer func(map[string][]string) string
+	// Proxy is the config of the proxy server.
+	Proxy *ProxyConfig
 	// Timeout specifies the time before the request times out.
 	Timeout int
 	// UserAgent sets the client's User-Agent field in the request header.
@@ -44,6 +47,13 @@ type Config struct {
 	Parameters map[string][]string
 	// ParametersSerializer is a function to charge of serializing the URL query parameters.
 	ParametersSerializer func(map[string][]string) string
+	// Proxy defines the address and the auth credentials of the proxy server, it will be overwritten
+	// by the request options' proxy config if the proxy config is not empty in the request options.
+	//
+	// You can also define the proxy by the `http_proxy` and `https_proxy` environment variables. If
+	// no proxy config in the request options or the client config, the request will try to get a
+	// proxy from the environment variables.
+	Proxy *ProxyConfig
 	// Timeout is request timeout in milliseconds.
 	Timeout int
 	// UserAgent sets the client's User-Agent field in the request header.
@@ -102,6 +112,7 @@ func New(config ...Config) *Client {
 		cli.BaseURL = cfg.BaseURL
 		cli.MaxRedirects = cfg.MaxRedirects
 		cli.ParametersSerializer = cfg.ParametersSerializer
+		cli.Proxy = cfg.Proxy
 		cli.Timeout = cfg.Timeout
 		cli.UserAgent = cfg.UserAgent
 		cli.ValidateStatus = cfg.ValidateStatus
@@ -224,6 +235,7 @@ func (cli *Client) getHTTPClient(opt RequestOptions) *http.Client {
 	}
 
 	httpClient.CheckRedirect = cli.getCheckRedirect(maxRedirects)
+	httpClient.Transport = cli.getTransport(opt)
 
 	return httpClient
 }
@@ -263,4 +275,31 @@ func (cli *Client) defaultCheckRedirect(req *http.Request, via []*http.Request) 
 // returns true if the status code is greater than or equal to 200, and less than 400.
 func (cli *Client) defaultValidateStatus(status int) bool {
 	return status >= http.StatusOK && status < http.StatusBadRequest
+}
+
+// getTransport gets the transport by the request options.
+func (cli *Client) getTransport(opt RequestOptions) http.RoundTripper {
+	transport := http.Transport{}
+	transport.Proxy = cli.getProxy(opt)
+
+	return &transport
+}
+
+// getProxy tries to get a proxy by the proxy config from the request options, and it returns
+// `http.ProxyFromEnvironment` if there is no proxy config in the request options.
+func (cli *Client) getProxy(opt RequestOptions) func(*http.Request) (*url.URL, error) {
+	proxy := opt.Proxy
+	if proxy == nil {
+		proxy = cli.Proxy
+	}
+	if proxy == nil {
+		return http.ProxyFromEnvironment
+	}
+
+	proxyUrl := new(url.URL)
+	proxyUrl.Scheme = proxy.Protocol
+	proxyUrl.Host = net.JoinHostPort(proxy.Host, proxy.Port)
+	proxyUrl.User = url.UserPassword(proxy.Username, proxy.Password)
+
+	return http.ProxyURL(proxyUrl)
 }

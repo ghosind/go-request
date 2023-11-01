@@ -95,6 +95,11 @@ type RequestOptions struct {
 	Parameters map[string][]string
 	// ParametersSerializer is a function to charge of serializing the URL query parameters.
 	ParametersSerializer func(map[string][]string) string
+	// Proxy defines the address and the auth credentials of the proxy server, it will overwrite the
+	// client's proxy config. You can also define the proxy by the `http_proxy` and `https_proxy`
+	// environment variables. If no proxy config in the request options or the client config, the
+	// request will try to get a proxy from the environment variables.
+	Proxy *ProxyConfig
 	// Timeout specifies the number of milliseconds before the request times out. This value will be
 	// ignored if the `Content` field in the request options is set. It indicates no time-out
 	// limitation if the value is -1.
@@ -127,6 +132,20 @@ type BasicAuthConfig struct {
 	// Username indicates the username used for HTTP Basic Auth
 	Username string
 	// Password indicates the password used for HTTP Basic Auth
+	Password string
+}
+
+// ProxyConfig defines the protocol, hostname, port, username, and password of the proxy server.
+type ProxyConfig struct {
+	// Protocol is the protocol of the proxy server, support "http", "https", and "socks5".
+	Protocol string
+	// Host is the hostname of the proxy server.
+	Host string
+	// Port is the port of the proxy server.
+	Port string
+	// Username is the username that is used to connect to the proxy server.
+	Username string
+	// Password is the password that is used to connect to the proxy server.
 	Password string
 }
 
@@ -437,6 +456,16 @@ func (opt *RequestOptions) SetParametersSerializer(
 	fn func(map[string][]string) string,
 ) *RequestOptions {
 	opt.ParametersSerializer = fn
+
+	return opt
+}
+
+// Proxy sets the address and the auth credentials of the proxy server, it will overwrite the
+// client's proxy config. You can also define the proxy by the `http_proxy` and `https_proxy`
+// environment variables. If no proxy config in the request options or the client config, the
+// request will try to get a proxy from the environment variables.
+func (opt *RequestOptions) SetProxy(proxy ProxyConfig) *RequestOptions {
+	opt.Proxy = &proxy
 
 	return opt
 }
