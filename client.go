@@ -279,10 +279,14 @@ func (cli *Client) defaultValidateStatus(status int) bool {
 
 // getTransport gets the transport by the request options.
 func (cli *Client) getTransport(opt RequestOptions) http.RoundTripper {
-	transport := http.Transport{}
-	transport.Proxy = cli.getProxy(opt)
+	proxy := cli.getProxy(opt)
+	if proxy == nil {
+		return nil
+	}
 
-	return &transport
+	return &http.Transport{
+		Proxy: proxy,
+	}
 }
 
 // getProxy tries to get a proxy by the proxy config from the request options, and it returns
