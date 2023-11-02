@@ -18,6 +18,9 @@ func TestMain(m *testing.M) {
 	server := internal.NewMockServer()
 	go server.Run()
 
+	proxy := internal.NewProxyServer()
+	go proxy.Run()
+
 	status := m.Run()
 
 	server.Shutdown()
