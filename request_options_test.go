@@ -266,6 +266,20 @@ func TestParametersSerializerChain(t *testing.T) {
 	a.Equal(*data.Query, "status[0]=0&status[1]=10")
 }
 
+func TestSetProxyChain(t *testing.T) {
+	a := assert.New(t)
+
+	data, _, err := ToObject[testResponse](Req("http://localhost:8080").SetProxy(ProxyConfig{
+		Host:     "127.0.0.1",
+		Port:     "8000",
+		Username: "user",
+		Password: "pass",
+	}).Do())
+	a.NilNow(err)
+	a.NotNilNow(data.Headers)
+	a.Equal((*data.Headers)["X-Forward-For"], []string{"127.0.0.1"})
+}
+
 func TestSetTimeoutChain(t *testing.T) {
 	a := assert.New(t)
 
