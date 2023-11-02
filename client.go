@@ -297,7 +297,7 @@ func (cli *Client) getProxy(opt RequestOptions) func(*http.Request) (*url.URL, e
 		proxy = cli.Proxy
 	}
 	if proxy == nil {
-		return http.ProxyFromEnvironment
+		return nil
 	}
 
 	proxyUrl := new(url.URL)
