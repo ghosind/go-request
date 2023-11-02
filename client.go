@@ -303,7 +303,9 @@ func (cli *Client) getProxy(opt RequestOptions) func(*http.Request) (*url.URL, e
 	proxyUrl := new(url.URL)
 	proxyUrl.Scheme = proxy.Protocol
 	proxyUrl.Host = net.JoinHostPort(proxy.Host, proxy.Port)
-	proxyUrl.User = url.UserPassword(proxy.Username, proxy.Password)
+	if proxy.Username != "" || proxy.Password != "" {
+		proxyUrl.User = url.UserPassword(proxy.Username, proxy.Password)
+	}
 
 	return http.ProxyURL(proxyUrl)
 }
