@@ -41,12 +41,36 @@ func (cli *Client) request(method, url string, opts ...RequestOptions) (*http.Re
 	}
 	defer canFunc()
 
-	resp, err := cli.sendRequest(req, opt)
+	resp, err := cli.sendRequestWithInterceptors(req, opt)
 	if err != nil {
 		return resp, err
 	}
 
 	return cli.handleResponse(resp, opt)
+}
+
+// sendRequestWithInterceptors tries to execute the request and response interceptors and
+// sends the request.
+func (cli *Client) sendRequestWithInterceptors(
+	req *http.Request,
+	opt RequestOptions,
+) (*http.Response, error) {
+	err := cli.doRequestIntercept(req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := cli.sendRequest(req, opt)
+	if err != nil {
+		return nil, err
+	}
+
+	err = cli.doResponseIntercept(resp)
+	if err != nil {
+		return resp, err
+	}
+
+	return resp, nil
 }
 
 // sendRequest gets an HTTP client from the HTTP clients pool and sends the request. It tries to
