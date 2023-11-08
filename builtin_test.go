@@ -1,6 +1,7 @@
 package request
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -149,6 +150,23 @@ func TestRequestWithBody(t *testing.T) {
 	a.EqualNow(*data.Method, "POST")
 	a.EqualNow(*data.ContentType, "application/json")
 	a.EqualNow(*data.Body, `{"data":"Hello world!"}`)
+}
+
+func TestRequestWithContext(t *testing.T) {
+	a := assert.New(t)
+
+	_, err := GET("http://localhost:8080", RequestOptions{
+		Context: context.Background(),
+	})
+	a.NilNow(err)
+
+	ctx, canFunc := context.WithCancel(context.Background())
+	canFunc()
+	_, err = GET("http://localhost:8080", RequestOptions{
+		Context:     ctx,
+		ContentType: "unknown",
+	})
+	a.NotNilNow(err)
 }
 
 func TestRequestWithGZipEncodedBody(t *testing.T) {
