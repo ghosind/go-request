@@ -39,9 +39,7 @@ func (cli *Client) request(method, url string, opts ...RequestOptions) (*http.Re
 	if err != nil {
 		return nil, err
 	}
-	if canFunc != nil {
-		defer canFunc()
-	}
+	defer canFunc()
 
 	resp, err := cli.sendRequest(req, opt)
 	if err != nil {
@@ -361,7 +359,7 @@ func (cli *Client) getURL(url string, opt RequestOptions) (string, string, error
 // that is set in the request options.
 func (cli *Client) getContext(opt RequestOptions) (context.Context, context.CancelFunc) {
 	if opt.Context != nil {
-		return opt.Context, nil
+		return opt.Context, func() {} // empty cancel function, just do nothing
 	}
 
 	baseCtx := context.Background()
@@ -374,7 +372,7 @@ func (cli *Client) getContext(opt RequestOptions) (context.Context, context.Canc
 	}
 
 	if timeout == RequestTimeoutNoLimit {
-		return baseCtx, nil
+		return baseCtx, func() {} // empty cancel function, just do nothing
 	} else {
 		return context.WithTimeout(baseCtx, time.Duration(timeout)*time.Millisecond)
 	}
