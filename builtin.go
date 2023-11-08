@@ -67,3 +67,13 @@ func PUT(url string, opt ...RequestOptions) (*http.Response, error) {
 func Req(url string) *RequestOptions {
 	return defaultClient.Req(url)
 }
+
+// UseRequestInterceptor adds the request interceptors to the default client.
+func UseRequestInterceptor(interceptors ...RequestInterceptor) {
+	defaultClient.UseRequestInterceptor(interceptors...)
+}
+
+// UseResponseInterceptor adds the response interceptors to the default client.
+func UseResponseInterceptor(interceptors ...ResponseInterceptor) {
+	defaultClient.UseResponseInterceptor(interceptors...)
+}

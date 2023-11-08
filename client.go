@@ -31,6 +31,10 @@ type Client struct {
 
 	// clientPool is for save http.Client instances.
 	clientPool *sync.Pool
+	// reqInterceptors are the request interceptors used for all requests that the client sends.
+	reqInterceptors []RequestInterceptor
+	// respInterceptors are the response interceptors used for all requests that the client sends.
+	respInterceptors []ResponseInterceptor
 }
 
 // Config is the config for the HTTP requesting client.
@@ -105,6 +109,8 @@ func New(config ...Config) *Client {
 
 	cli.Headers = make(http.Header)
 	cli.Parameters = make(url.Values)
+	cli.reqInterceptors = make([]RequestInterceptor, 0)
+	cli.respInterceptors = make([]ResponseInterceptor, 0)
 
 	if len(config) > 0 {
 		cfg := config[0]
@@ -192,6 +198,16 @@ func (cli *Client) Req(url string) *RequestOptions {
 	opt.client = cli
 
 	return opt
+}
+
+// UseRequestInterceptor adds the request interceptors to the client.
+func (cli *Client) UseRequestInterceptor(interceptors ...RequestInterceptor) {
+	cli.reqInterceptors = append(cli.reqInterceptors, interceptors...)
+}
+
+// UseResponseInterceptor adds the response interceptors to the client.
+func (cli *Client) UseResponseInterceptor(interceptors ...ResponseInterceptor) {
+	cli.respInterceptors = append(cli.respInterceptors, interceptors...)
 }
 
 // initClientHeaders initializes client's Headers field from config.
