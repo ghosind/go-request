@@ -106,7 +106,7 @@ func (cli *Client) decodeResponseBody(resp *http.Response) *http.Response {
 	case "gzip", "x-gzip":
 		reader, err := gzip.NewReader(resp.Body)
 		if err != nil {
-			return nil
+			return resp
 		}
 		resp.Body.Close()
 		resp.Body = reader
