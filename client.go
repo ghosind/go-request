@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"sync"
+	"sync/atomic"
 )
 
 // Client is the HTTP requesting client.
@@ -32,9 +33,14 @@ type Client struct {
 	// clientPool is for save http.Client instances.
 	clientPool *sync.Pool
 	// reqInterceptors are the request interceptors used for all requests that the client sends.
-	reqInterceptors []RequestInterceptor
+	reqInterceptors []requestInterceptor
 	// respInterceptors are the response interceptors used for all requests that the client sends.
-	respInterceptors []ResponseInterceptor
+	respInterceptors []responseInterceptor
+	// interceptorId is an atomic integer for the interceptor's ID, increase it by 1 to get the next
+	// id.
+	interceptorId atomic.Uint64
+	// interceptorMutex is the locker for the request and response interceptors.
+	interceptorMutex sync.RWMutex
 }
 
 // Config is the config for the HTTP requesting client.
@@ -109,8 +115,8 @@ func New(config ...Config) *Client {
 
 	cli.Headers = make(http.Header)
 	cli.Parameters = make(url.Values)
-	cli.reqInterceptors = make([]RequestInterceptor, 0)
-	cli.respInterceptors = make([]ResponseInterceptor, 0)
+	cli.reqInterceptors = make([]requestInterceptor, 0)
+	cli.respInterceptors = make([]responseInterceptor, 0)
 
 	if len(config) > 0 {
 		cfg := config[0]
@@ -200,14 +206,120 @@ func (cli *Client) Req(url string) *RequestOptions {
 	return opt
 }
 
-// UseRequestInterceptor adds the request interceptors to the client.
-func (cli *Client) UseRequestInterceptor(interceptors ...RequestInterceptor) {
-	cli.reqInterceptors = append(cli.reqInterceptors, interceptors...)
+// UseRequestInterceptor adds the request interceptors to the client. It'll return their ID and you
+// can remove these interceptors with the ID by the RemoveRequestInterceptor method.
+//
+//	cli := request.New()
+//	cli.UseRequestInterceptor(func (req *http.Request) error {
+//		// do something
+//		return nil
+//	})
+func (cli *Client) UseRequestInterceptor(interceptors ...RequestInterceptor) []uint64 {
+	cli.interceptorMutex.Lock()
+	defer cli.interceptorMutex.Unlock()
+
+	ids := make([]uint64, 0, len(interceptors))
+
+	for _, interceptor := range interceptors {
+		if interceptor == nil {
+			ids = append(ids, 0)
+			continue
+		}
+
+		id := cli.interceptorId.Add(1)
+		cli.reqInterceptors = append(cli.reqInterceptors, requestInterceptor{
+			ID:          id,
+			Interceptor: interceptor,
+		})
+		ids = append(ids, id)
+	}
+
+	return ids
 }
 
-// UseResponseInterceptor adds the response interceptors to the client.
-func (cli *Client) UseResponseInterceptor(interceptors ...ResponseInterceptor) {
-	cli.respInterceptors = append(cli.respInterceptors, interceptors...)
+// RemoveRequestInterceptor removes the request interceptor by the specified interceptor ID, and it
+// returns a boolean value to indicate the result.
+//
+//	ids := cli.UseRequestInterceptor(func (req *http.Request) error {
+//		// do something
+//		return nil
+//	})
+//
+//	cli.RemoveRequestInterceptor(ids[0])
+func (cli *Client) RemoveRequestInterceptor(interceptorId uint64) bool {
+	if interceptorId == 0 || interceptorId > cli.interceptorId.Load() {
+		return false
+	}
+
+	cli.interceptorMutex.Lock()
+	defer cli.interceptorMutex.Unlock()
+
+	for i, interceptor := range cli.reqInterceptors {
+		if interceptor.ID == interceptorId {
+			cli.reqInterceptors = append(cli.reqInterceptors[:i], cli.reqInterceptors[i+1:]...)
+			return true
+		}
+	}
+
+	return false
+}
+
+// UseResponseInterceptor adds the response interceptors to the client. It'll return their ID and
+// you can remove these interceptors with the ID by the RemoveResponseInterceptor method.
+//
+//	cli := request.New()
+//	cli.UseResponseInterceptor(func (resp *http.Response) error {
+//		// do something
+//		return nil
+//	})
+func (cli *Client) UseResponseInterceptor(interceptors ...ResponseInterceptor) []uint64 {
+	cli.interceptorMutex.Lock()
+	defer cli.interceptorMutex.Unlock()
+
+	ids := make([]uint64, 0, len(interceptors))
+
+	for _, interceptor := range interceptors {
+		if interceptor == nil {
+			ids = append(ids, 0)
+			continue
+		}
+
+		id := cli.interceptorId.Add(1)
+		cli.respInterceptors = append(cli.respInterceptors, responseInterceptor{
+			ID:          id,
+			Interceptor: interceptor,
+		})
+		ids = append(ids, id)
+	}
+
+	return ids
+}
+
+// RemoveResponseInterceptor removes the response interceptor by the specified interceptor ID, and
+// it returns a boolean value to indicate the result.
+//
+//	ids := cli.UseResponseInterceptor(func (resp *http.Response) error {
+//		// do something
+//		return nil
+//	})
+//
+//	cli.RemoveResponseInterceptor(ids[0])
+func (cli *Client) RemoveResponseInterceptor(interceptorId uint64) bool {
+	if interceptorId == 0 || interceptorId > cli.interceptorId.Load() {
+		return false
+	}
+
+	cli.interceptorMutex.Lock()
+	defer cli.interceptorMutex.Unlock()
+
+	for i, interceptor := range cli.respInterceptors {
+		if interceptor.ID == interceptorId {
+			cli.respInterceptors = append(cli.respInterceptors[:i], cli.respInterceptors[i+1:]...)
+			return true
+		}
+	}
+
+	return false
 }
 
 // initClientHeaders initializes client's Headers field from config.

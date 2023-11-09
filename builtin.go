@@ -68,12 +68,50 @@ func Req(url string) *RequestOptions {
 	return defaultClient.Req(url)
 }
 
-// UseRequestInterceptor adds the request interceptors to the default client.
-func UseRequestInterceptor(interceptors ...RequestInterceptor) {
-	defaultClient.UseRequestInterceptor(interceptors...)
+// UseRequestInterceptor adds the request interceptors to the default client. It'll return their ID
+// and you can remove these interceptors with the ID by the RemoveRequestInterceptor method.
+//
+//	UseRequestInterceptor(func (req *http.Request) error {
+//		// do something
+//		return nil
+//	})
+func UseRequestInterceptor(interceptors ...RequestInterceptor) []uint64 {
+	return defaultClient.UseRequestInterceptor(interceptors...)
 }
 
-// UseResponseInterceptor adds the response interceptors to the default client.
-func UseResponseInterceptor(interceptors ...ResponseInterceptor) {
-	defaultClient.UseResponseInterceptor(interceptors...)
+// RemoveRequestInterceptor removes the request interceptor by the specified interceptor ID, and it
+// returns a boolean value to indicate the result.
+//
+//	ids := UseRequestInterceptor(func (req *http.Request) error {
+//		// do something
+//		return nil
+//	})
+//
+//	RemoveRequestInterceptor(ids[0])
+func RemoveRequestInterceptor(interceptorId uint64) bool {
+	return defaultClient.RemoveRequestInterceptor(interceptorId)
+}
+
+// UseResponseInterceptor adds the response interceptors to the default client. It'll return their
+// ID and you can remove these interceptors with the ID by the RemoveResponseInterceptor method.
+//
+//	UseResponseInterceptor(func (resp *http.Response) error {
+//		// do something
+//		return nil
+//	})
+func UseResponseInterceptor(interceptors ...ResponseInterceptor) []uint64 {
+	return defaultClient.UseResponseInterceptor(interceptors...)
+}
+
+// RemoveResponseInterceptor removes the response interceptor by the specified interceptor ID, and
+// it returns a boolean value to indicate the result.
+//
+//	ids := UseResponseInterceptor(func (resp *http.Response) error {
+//		// do something
+//		return nil
+//	})
+//
+//	RemoveResponseInterceptor(ids[0])
+func RemoveResponseInterceptor(interceptorId uint64) bool {
+	return defaultClient.RemoveResponseInterceptor(interceptorId)
 }
