@@ -1,6 +1,7 @@
 # HTTP Request tool for Go
 
 ![test](https://github.com/ghosind/go-request/workflows/test/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ghosind/go-request)](https://goreportcard.com/report/github.com/ghosind/go-request)
 [![codecov](https://codecov.io/gh/ghosind/go-request/branch/main/graph/badge.svg)](https://codecov.io/gh/ghosind/go-request)
 ![Version Badge](https://img.shields.io/github/v/release/ghosind/go-request)
 ![License Badge](https://img.shields.io/github/license/ghosind/go-request)
@@ -27,6 +28,8 @@ An easy-to-use HTTP request tool for Golang.
 - Serialize request body automatically.
 - Response body deserialization wrapper.
 - Decode the compressed response body automatically.
+- Chaining API.
+- Request and Response interceptors.
 
 ## Installation
 
@@ -104,6 +107,18 @@ You can also set `Timeout` to `request.RequestTimeoutNone` to disable the timeou
 
 > The timeout will be disabled if you set `Context` in the request config, you need to handle it manually.
 
+### Chaining API
+
+You can also make a request by chaining API: 
+
+```go
+resp, err := request.Req("http://example.com").
+  POST().
+  SetBody(map[string]any{ "title": "Apple" }).
+  SetTimeout(3000).
+  Do()
+```
+
 ### Response body handling
 
 We provided `ToObject` and `ToString` methods to handle response body. For example, the `ToString` method will read all data in the response body, and return it that represented in a string value.
@@ -113,7 +128,6 @@ content, resp, err := ToString(request.Request("https://example.com/products/1")
 if err != nil {
   // handle error
 }
-// content: {"id":1,"title":"iPhone9",...
 // handle response
 ```
 
@@ -129,7 +143,6 @@ product, resp, err := ToObject[Product](request.Request("https://example.com/pro
 if err != nil {
   // handle error
 }
-// product: {1 iPhone9}
 // handle response
 ```
 

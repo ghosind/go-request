@@ -1,6 +1,7 @@
 # Golang HTTP请求工具库
 
 ![test](https://github.com/ghosind/go-request/workflows/test/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ghosind/go-request)](https://goreportcard.com/report/github.com/ghosind/go-request)
 [![codecov](https://codecov.io/gh/ghosind/go-request/branch/main/graph/badge.svg)](https://codecov.io/gh/ghosind/go-request)
 ![Version Badge](https://img.shields.io/github/v/release/ghosind/go-request)
 ![License Badge](https://img.shields.io/github/license/ghosind/go-request)
@@ -26,6 +27,8 @@
 - 无需手动序列化请求内容，发出请求时自动根据所需格式处理
 - 响应内容反序列化封装
 - 自动根据响应头部对内容进行解码（解压）
+- 链式API
+- 请求/响应拦截器
 
 ## 安装
 
@@ -103,6 +106,18 @@ resp, err := request.Request("https://example.com", request.RequestConfig{
 
 > 在通过`Context`属性传入自定义上下文的情况下，将不再执行超时的设定。若需要对请求超时进行控制，则需要进行手动处理。
 
+### 链式API
+
+我们同样提供了链式API用于发起请求，下面是一个链式API的简单示例：
+
+```go
+resp, err := request.Req("http://example.com").
+  POST().
+  SetBody(map[string]any{ "title": "Apple" }).
+  SetTimeout(3000).
+  Do()
+```
+
 ### 响应内容处理
 
 对于响应的内容，提供了`ToObject`及`ToString`方法用于简便处理。例如可以使用`ToString`方法读取响应内容，并以字符串的形式返回。
@@ -112,7 +127,6 @@ content, resp, err := ToString(request.Request("https://example.com/products/1")
 if err != nil {
   // 错误处理
 }
-// content: {"id":1,"title":"iPhone9",...
 // 响应处理
 ```
 
@@ -128,7 +142,6 @@ product, resp, err := ToObject[Product](request.Request("https://example.com/pro
 if err != nil {
   // 错误处理
 }
-// product: {1 iPhone9}
 // 响应处理
 ```
 
