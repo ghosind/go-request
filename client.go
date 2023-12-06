@@ -3,9 +3,12 @@ package request
 import (
 	"net"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"sync"
 	"sync/atomic"
+
+	"golang.org/x/net/publicsuffix"
 )
 
 // Client is the HTTP requesting client.
@@ -32,6 +35,8 @@ type Client struct {
 
 	// clientPool is for save http.Client instances.
 	clientPool *sync.Pool
+	// cookieJar is the storage for request cookies.
+	cookieJar http.CookieJar
 	// reqInterceptors are the request interceptors used for all requests that the client sends.
 	reqInterceptors []requestInterceptor
 	// respInterceptors are the response interceptors used for all requests that the client sends.
@@ -112,6 +117,11 @@ func New(config ...Config) *Client {
 			return new(http.Client)
 		},
 	}
+	// cookiejar.New never returns error, so ignore it in this place.
+	jar, _ := cookiejar.New(&cookiejar.Options{
+		PublicSuffixList: publicsuffix.List,
+	})
+	cli.cookieJar = jar
 
 	cli.Headers = make(http.Header)
 	cli.Parameters = make(url.Values)
@@ -364,6 +374,7 @@ func (cli *Client) getHTTPClient(opt RequestOptions) *http.Client {
 
 	httpClient.CheckRedirect = cli.getCheckRedirect(maxRedirects)
 	httpClient.Transport = cli.getTransport(opt)
+	httpClient.Jar = cli.cookieJar
 
 	return httpClient
 }
