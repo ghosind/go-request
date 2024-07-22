@@ -100,6 +100,9 @@ type RequestOptions struct {
 	// environment variables. If no proxy config in the request options or the client config, the
 	// request will try to get a proxy from the environment variables.
 	Proxy *ProxyConfig
+	// InsecureSkipVerify controls whether the HTTP client verifies the server's certificate and host
+	// name.
+	InsecureSkipVerify bool
 	// Timeout specifies the number of milliseconds before the request times out. This value will be
 	// ignored if the `Content` field in the request options is set. It indicates no time-out
 	// limitation if the value is -1.
@@ -466,6 +469,14 @@ func (opt *RequestOptions) SetParametersSerializer(
 // request will try to get a proxy from the environment variables.
 func (opt *RequestOptions) SetProxy(proxy ProxyConfig) *RequestOptions {
 	opt.Proxy = &proxy
+
+	return opt
+}
+
+// SetInsecureSkipVerify sets and controls whether the HTTP client verifies the server's
+// certificate and host name.
+func (opt *RequestOptions) SetInsecureSkipVerify(skipVerify bool) *RequestOptions {
+	opt.InsecureSkipVerify = skipVerify
 
 	return opt
 }

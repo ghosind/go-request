@@ -280,6 +280,16 @@ func TestSetProxyChain(t *testing.T) {
 	a.Equal((*data.Headers)["X-Forward-For"], []string{"127.0.0.1"})
 }
 
+func TestSetInsecureSkipVerify(t *testing.T) {
+	a := assert.New(t)
+
+	// TODO: Add HTTPS test cases
+	_, _, err := ToObject[testResponse](Req("http://localhost:8080").
+		SetInsecureSkipVerify(true).
+		Do())
+	a.NilNow(err)
+}
+
 func TestSetTimeoutChain(t *testing.T) {
 	a := assert.New(t)
 

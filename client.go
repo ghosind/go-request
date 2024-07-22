@@ -1,6 +1,7 @@
 package request
 
 import (
+	"crypto/tls"
 	"net"
 	"net/http"
 	"net/url"
@@ -408,12 +409,15 @@ func (cli *Client) defaultValidateStatus(status int) bool {
 // getTransport gets the transport by the request options.
 func (cli *Client) getTransport(opt RequestOptions) http.RoundTripper {
 	proxy := cli.getProxy(opt)
-	if proxy == nil {
+	tls := cli.getTLSConfig(opt)
+
+	if proxy == nil && tls == nil {
 		return nil
 	}
 
 	return &http.Transport{
-		Proxy: proxy,
+		Proxy:           proxy,
+		TLSClientConfig: tls,
 	}
 }
 
@@ -436,4 +440,16 @@ func (cli *Client) getProxy(opt RequestOptions) func(*http.Request) (*url.URL, e
 	}
 
 	return http.ProxyURL(proxyUrl)
+}
+
+// getTLSConfig tries to get the config that used to configure a TLS client or server.
+func (cli *Client) getTLSConfig(opt RequestOptions) *tls.Config {
+	if !opt.InsecureSkipVerify {
+		return nil
+	}
+
+	cfg := new(tls.Config)
+	cfg.InsecureSkipVerify = opt.InsecureSkipVerify
+
+	return cfg
 }
