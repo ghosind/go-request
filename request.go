@@ -92,7 +92,7 @@ func (cli *Client) sendRequest(req *http.Request, opt RequestOptions) (*http.Res
 		attempt++
 
 		resp, err := httpClient.Do(req)
-		if err == nil || (err != nil && attempt >= maxAttempt) {
+		if err == nil || attempt >= maxAttempt {
 			return resp, err
 		} else if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 			return resp, err
